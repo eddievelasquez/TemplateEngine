@@ -14,6 +14,7 @@
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <IncludeSymbols>true</IncludeSymbols>
     <IncludeSource>true</IncludeSource>
+    <RootNamespace>Intercode.Toolbox.TemplateEngine</RootNamespace>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -33,7 +34,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="Intercode.Toolbox.TemplateEngine.Tests" />
+    <InternalsVisibleTo Include="TemplateEngine.UnitTests" />
   </ItemGroup>
 
   <ItemGroup>

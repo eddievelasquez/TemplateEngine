@@ -16,8 +16,8 @@
     <File Path="README.md" />
     <File Path="version.json" />
   </Folder>
-  <Project Path="Intercode.Toolbox.TemplateEngine.Benchmarks/Intercode.Toolbox.TemplateEngine.Benchmarks.csproj" />
-  <Project Path="Intercode.Toolbox.TemplateEngine.Sample/Intercode.Toolbox.TemplateEngine.Sample.csproj" />
-  <Project Path="Intercode.Toolbox.TemplateEngine.Tests/Intercode.Toolbox.TemplateEngine.Tests.csproj" />
-  <Project Path="Intercode.Toolbox.TemplateEngine/Intercode.Toolbox.TemplateEngine.csproj" />
+  <Project Path="TemplateEngine.Benchmarks/TemplateEngine.Benchmarks.csproj" />
+  <Project Path="TestApp/TestApp.csproj" />
+  <Project Path="TemplateEngine.UnitTests/TemplateEngine.UnitTests.csproj" />
+  <Project Path="TemplateEngine/TemplateEngine.csproj" />
 </Solution>
