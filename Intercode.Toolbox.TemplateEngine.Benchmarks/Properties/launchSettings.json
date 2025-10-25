@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "TemplateEngine.Benchmarks": {
+      "commandName": "Project",
+      "commandLineArgs": "--filter *",
+      "environmentVariables": {
+        "DOTNET_GCDynamicAdaptationMode": "0"
+      }
+    }
+  }
+}

@@ -1,0 +1,43 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net8.0;net9.0</TargetFrameworks>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageId>Intercode.Toolbox.TemplateEngine</PackageId>
+    <Title>Template Engine</Title>
+    <Description>Fast and simple templating engine</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>template;templating;templateengine;engine;macro;macroreplacement;intercodetoolbox;text;generation;fast</PackageTags>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <IncludeSource>true</IncludeSource>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <Optimize>False</Optimize>
+    <NoWarn>1701;1702</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <Optimize>True</Optimize>
+    <NoWarn>1701;1702</NoWarn>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="../README.md" Pack="True" PackagePath="" />
+    <None Include="../BenchmarkResults.png" Pack="True" PackagePath="" Condition="Exists('../BenchmarkResults.png')" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Intercode.Toolbox.TemplateEngine.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Collections.Immutable" />
+  </ItemGroup>
+
+</Project>
