@@ -2,7 +2,10 @@
 
 A fast, allocation-conscious text templating engine for .NET.
 
-## Table of Contents
+[![NuGet](https://img.shields.io/nuget/v/Intercode.Toolbox.TemplateEngine)](https://www.nuget.org/packages/Intercode.Toolbox.TemplateEngine)
+[![License](https://img.shields.io/github/license/eddievelasquez/TemplateEngine)](LICENSE)
+
+`## Table of Contents
   - [Overview](#overview)
   - [Quick Start](#quick-start)
   - [Concepts](#concepts)
@@ -38,68 +41,77 @@ Hello, $Name$! Today is $NOW:yyyyMMdd$.
 
 ## Quick Start
 
-Option A: Simplest flow (auto-declare macros while compiling)
+1. Install the [Intercode.Toolbox.TemplateEngine](https://www.nuget.org/packages/Intercode.Toolbox.TemplateEngine/) package .
 
-```csharp
-// 1. Compile template (macros encountered in text are declared automatically)
-var template = TemplateCompiler.Compile(
-  "Hello, $Name$! Today is $NOW:yyyyMMdd$. You are $Age$ years old!"
-);
+   ```
+   dotnet add package Intercode.Toolbox.TemplateEngine
+   ```
 
-// 2. Provide values (static and/or dynamically generated)
-var values = template.CreateValues()
-  .SetValue("Name", "John")
-  .SetValue("Age", _ => Random.Shared.Next(18, 100).ToString());
+2. Create a template, provide macro values, and process it. The most common approaches are shown below.
 
-// 3. Process the template
-var text = template.ProcessMacros(values);
-```
+   1. Simplest flow (auto-declare macros while compiling)
 
-Option B: Explicit macro declaration and shared macro table
+      ```csharp
+      // 1. Compile template (macros encountered in text are declared automatically)
+      var template = TemplateCompiler.Compile(
+        "Hello, $Name$! Today is $NOW:yyyyMMdd$. You are $Age$ years old!"
+      );
 
-```csharp
-// 1. Declare user macros
-var macroTable = new MacroTableBuilder()
-  .Declare("Name")
-  .Declare("Age")
-  .Build();
+      // 2. Provide values (static and/or dynamically generated)
+      var values = template.CreateValues()
+        .SetValue("Name", "John")
+        .SetValue("Age", _ => Random.Shared.Next(18, 100).ToString());
 
-// 2. Compile template
-var template = TemplateCompiler.Compile(
-  "Hello, $Name$! Today is $NOW:yyyyMMdd$. You are $Age$ years old!",
-  macroTable
-);
+      // 3. Process the template
+      var text = template.ProcessMacros(values);
+      ```
 
-// 3. Provide values
-var values = macroTable.CreateValues()
-  .SetValue("Name", "John")
-  .SetValue("Age", _ => Random.Shared.Next(18, 100).ToString());
+   1. Explicit macro declaration and shared macro table
 
-// 4. Process the template
-var text = template.ProcessMacros(values);
-```
+      ```csharp
+      // 1. Declare user macros
+      var macroTable = new MacroTableBuilder()
+        .Declare("Name")
+        .Declare("Age")
+        .Build();
 
-Static-only scenario (no dynamic generators), using `MacroValues` with static strings:
-```csharp
-var table = new MacroTableBuilder()
-  .Declare("Name")
-  .Build();
+      // 2. Compile template
+      var template = TemplateCompiler.Compile(
+        "Hello, $Name$! Today is $NOW:yyyyMMdd$. You are $Age$ years old!",
+        macroTable
+      );
 
-var template = TemplateCompiler.Compile("Hello, $Name$!", table);
+      // 3. Provide values
+      var values = macroTable.CreateValues()
+        .SetValue("Name", "John")
+        .SetValue("Age", _ => Random.Shared.Next(18, 100).ToString());
 
-var values = table.CreateValues()
-  .SetValue("Name", "World");
+      // 4. Process the template
+      var text = template.ProcessMacros(values);
+      ```
 
-var text = template.ProcessMacros(values);
+   1. Static-only scenario (no dynamic generators), using `MacroValues` with static strings:
+   
+      ```csharp
+      var table = new MacroTableBuilder()
+        .Declare("Name")
+        .Build();
 
-// Or use positional overloads for high-throughput scenarios
-var text2 = template.ProcessMacros("World");
-```
+      var template = TemplateCompiler.Compile("Hello, $Name$!", table);
 
-### Choosing a Compile overload
-- `Compile(string text)`: Easiest on-ramp. Macros are auto-declared as they are encountered in the template. The declaration (slot) order follows the first occurrence of each macro placeholder in the template text after include expansion. Use `template.CreateValues()` to provide values. Good for one-off templates where you don’t need to share a macro table.
-- `Compile(string text, MacroTableBuilder builder, ...)`: Simplifies usage while still letting you accumulate macro declarations into a builder you control. Macros are declared into the builder in the order they first appear in the template text (post-include). Pass the same builder to multiple `Compile` calls to keep a shared mapping; slots are assigned in the sequence templates are compiled and, within each template, by first occurrence. Note that a new `MacroTable` instance is built for each compiled template. .
-- `Compile(string text, MacroTable macroTable, ...)`: Maximum control. You decide declaration order and reuse the same `MacroTable` across many templates. This guarantees consistent slot ordering and is recommended for high-throughput scenarios that must share values containers and avoid churn.
+      var values = table.CreateValues()
+        .SetValue("Name", "World");
+
+      var text = template.ProcessMacros(values);
+
+      // Or use positional overloads for high-throughput scenarios
+      var text2 = template.ProcessMacros("World");
+      ```
+
+> Choosing a `Compile` overload
+> - `Compile(string text)`: Easiest on-ramp. Macros are auto-declared as they are encountered in the template. The declaration (slot) order follows the first occurrence of each macro placeholder in the template text after include expansion. Use `template.CreateValues()` to provide values. Good for one-off templates where you don’t need to share a macro table.
+> - `Compile(string text, MacroTableBuilder builder, ...)`: Simplifies usage while still letting you accumulate macro declarations into a builder you control. Macros are declared into the builder in the order they first appear in the template text (post-include). Pass the same builder to multiple `Compile` calls to keep a shared mapping; slots are assigned in the sequence templates are compiled and, within each template, by first occurrence. Note that a new `MacroTable` instance is built for each compiled template. .
+> - `Compile(string text, MacroTable macroTable, ...)`: Maximum control. You decide declaration order and reuse the same `MacroTable` across many templates. This guarantees consistent slot ordering and is recommended for high-throughput scenarios that must share values containers and avoid churn.
 
 ## Concepts
 
