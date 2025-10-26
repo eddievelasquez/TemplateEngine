@@ -8,7 +8,7 @@
   <PropertyGroup>
     <PackageId>Intercode.Toolbox.TemplateEngine</PackageId>
     <Title>Template Engine</Title>
-    <Description>Fast and simple templating engine</Description>
+    <Description>A fast, allocation-conscious text templating engine for .NET</Description>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageTags>template;templating;templateengine;engine;macro;macroreplacement;intercodetoolbox;text;generation;fast</PackageTags>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
