@@ -1,5 +1,6 @@
 <img height="280px" src="https://raw.githubusercontent.com/eddievelasquez/TemplateEngine/refs/heads/main/logo.svg"/>
 
+[![Build](https://github.com/eddievelasquez/TemplateEngine/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/eddievelasquez/TemplateEngine/actions/workflows/ci-cd.yml)
 [![NuGet](https://img.shields.io/nuget/v/Intercode.Toolbox.TemplateEngine)](https://www.nuget.org/packages/Intercode.Toolbox.TemplateEngine)
 [![License](https://img.shields.io/github/license/eddievelasquez/TemplateEngine)](LICENSE)
 

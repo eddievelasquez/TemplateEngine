@@ -1,0 +1,35 @@
+# configuration file for dotnet-releaser
+
+artifacts_folder = "artifacts"
+
+[msbuild]
+configuration = "Release"
+project = [
+  "TemplateEngine/TemplateEngine.csproj",
+  "TemplateEngine.UnitTests/TemplateEngine.UnitTests.csproj"
+]
+
+[test]
+enable = true
+run_tests = true
+
+[coverage]
+enable = true
+include_test_assembly = false
+deterministic_report = true
+format = ["cobertura"]
+badge_upload_to_gist = true
+badge_gist_id = "142efa0e4e5ef0a39b659d3d04f27621"
+
+[github]
+user = "eddievelasquez"
+repo = "TemplateEngine"
+branches = ["main"]
+publish = true
+
+[nuget]
+publish = true
+publish_draft = true
+
+[changelog]
+publish=false

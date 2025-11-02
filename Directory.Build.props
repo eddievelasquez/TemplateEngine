@@ -30,7 +30,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <MinVerIgnoreHeight>true</MinVerIgnoreHeight>
+    <MinVerIgnoreHeight>false</MinVerIgnoreHeight>
     <MinVerVerbosity>minimal</MinVerVerbosity>
   </PropertyGroup>
 
