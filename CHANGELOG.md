@@ -1,5 +1,14 @@
 # Changelog
 
+## 3.0.1 - 2025-11-02
+
+- Minor release, mostly devops maintenance.
+- Moved the code to a standalone [repository](https://github.com/eddievelasquez/TemplateEngine) to avoid the maintenance complications arising from the diverging lifecycle of other [Intercode.Toolbox](https://github.com/eddievelasquez/IntercodeToolbox) packages.
+- Improved documentation: cleaned up README: added badges and better Quick Start section. Added SECURITY and CONTRIBUTING files.
+- Cleaned up package references.
+- Switched to [MinVer](https://github.com/adamralph/minver) for versioning.
+- Using [dotnet-releaser](https://github.com/xoofx/dotnet-releaser) for automated releases.
+
 ## 3.0.0 - 2025-10-04
 
 - Simplified, static API and new object model. The new API is not backward compatible; see [README](README.md#migrating-from-2x-to-30) for migration instructions.

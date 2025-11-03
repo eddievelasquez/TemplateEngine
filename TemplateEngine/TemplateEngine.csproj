@@ -8,12 +8,14 @@
   <PropertyGroup>
     <PackageId>Intercode.Toolbox.TemplateEngine</PackageId>
     <Title>Template Engine</Title>
-    <Description>Fast and simple templating engine</Description>
+    <Description>A fast, allocation-conscious text templating engine for .NET</Description>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageTags>template;templating;templateengine;engine;macro;macroreplacement;intercodetoolbox;text;generation;fast</PackageTags>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <IncludeSymbols>true</IncludeSymbols>
     <IncludeSource>true</IncludeSource>
+    <RootNamespace>Intercode.Toolbox.TemplateEngine</RootNamespace>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -33,10 +35,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="Intercode.Toolbox.TemplateEngine.Tests" />
+    <InternalsVisibleTo Include="TemplateEngine.UnitTests" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="MinVer">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="System.Collections.Immutable" />
   </ItemGroup>
 

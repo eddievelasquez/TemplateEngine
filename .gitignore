@@ -364,3 +364,5 @@ FodyWeavers.xsd
 
 # NuGet Local Feed for test deployments
 .nuget-local-feed/
+.secrets
+event.json

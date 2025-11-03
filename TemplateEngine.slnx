@@ -8,16 +8,32 @@
     <File Path=".gitattributes" />
     <File Path=".github/copilot-instructions.md" />
     <File Path=".gitignore" />
+    <File Path="CHANGELOG.md" />
     <File Path="Directory.Build.props" />
     <File Path="Directory.Packages.props" />
-    <File Path="GitVersion.yml" />
+    <File Path="dotnet-releaser.toml" />
+    <File Path="global.json" />
     <File Path="LICENSE" />
     <File Path="nuget.config" />
     <File Path="README.md" />
     <File Path="version.json" />
   </Folder>
-  <Project Path="Intercode.Toolbox.TemplateEngine.Benchmarks/Intercode.Toolbox.TemplateEngine.Benchmarks.csproj" />
-  <Project Path="Intercode.Toolbox.TemplateEngine.Sample/Intercode.Toolbox.TemplateEngine.Sample.csproj" />
-  <Project Path="Intercode.Toolbox.TemplateEngine.Tests/Intercode.Toolbox.TemplateEngine.Tests.csproj" />
-  <Project Path="Intercode.Toolbox.TemplateEngine/Intercode.Toolbox.TemplateEngine.csproj" />
+  <Folder Name="/Solution Items/GitHub/">
+    <File Path=".github/CONTRIBUTING.md" />
+    <File Path=".github/copilot-instructions.md" />
+  </Folder>
+  <Folder Name="/Solution Items/GitHub/Issue Template/">
+    <File Path=".github/ISSUE_TEMPLATE/bug_report.md" />
+    <File Path=".github/ISSUE_TEMPLATE/feature_request.md" />
+  </Folder>
+  <Folder Name="/Solution Items/GitHub/Pull Request Template/">
+    <File Path=".github/PULL_REQUEST_TEMPLATE/pull_request_template.md" />
+  </Folder>
+  <Folder Name="/Solution Items/GitHub/Workflows/">
+    <File Path=".github/workflows/ci-cd.yml" />
+  </Folder>
+  <Project Path="TemplateEngine.Benchmarks/TemplateEngine.Benchmarks.csproj" />
+  <Project Path="TestApp/TestApp.csproj" />
+  <Project Path="TemplateEngine.UnitTests/TemplateEngine.UnitTests.csproj" />
+  <Project Path="TemplateEngine/TemplateEngine.csproj" />
 </Solution>

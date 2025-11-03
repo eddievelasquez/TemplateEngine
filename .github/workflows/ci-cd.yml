@@ -1,0 +1,48 @@
+name: Release TemplateEngine
+
+on:
+  workflow_dispatch:
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  DOTNET_GENERATE_ASPNET_CERTIFICATE: false
+  DOTNET_ADD_GLOBAL_TOOLS_TO_PATH: false
+  DOTNET_MULTILEVEL_LOOKUP: 0
+
+jobs:
+  release:
+    name: Build and Publish
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # required for changelog/history and MinVer
+          fetch-tags: true
+          filter: tree:0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            9.0.x
+            8.0.x
+          cache: true
+          cache-dependency-path: "**/packages.lock.json"
+
+      - name: Add .NET global tools to PATH
+        run: echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
+
+      - name: Install dotnet-releaser
+        run: dotnet tool install --global dotnet-releaser
+
+      - name: Build, Tests, Cover, Pack and Publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.TENGINE_GITHUB_TOKEN }}
+          NUGET_API_KEY: ${{ secrets.TENGINE_NUGET_API_KEY }}
+          PAT_GITHUB_TOKEN: ${{ secrets.TENGINE_PAT_GITHUB_TOKEN }}
+
+        run: dotnet-releaser run --table Minimal --github-token "${GITHUB_TOKEN}" --nuget-token "${NUGET_API_KEY}" --github-token-extra "${PAT_GITHUB_TOKEN}" dotnet-releaser.toml
