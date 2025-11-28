@@ -1,4 +1,4 @@
-<img height="280px" src="https://raw.githubusercontent.com/eddievelasquez/TemplateEngine/2d0da57dc6b5d86d840c8b824e28e8852630fc54/logo.svg"/>
+<img height="280px" src="https://raw.githubusercontent.com/eddievelasquez/TemplateEngine/249128cf790a534d1ad05d7c1e070485e300531b/logo.png"/>
 
 [![Build](https://github.com/eddievelasquez/TemplateEngine/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/eddievelasquez/TemplateEngine/actions/workflows/ci-cd.yml)
 [![NuGet](https://img.shields.io/nuget/v/Intercode.Toolbox.TemplateEngine)](https://www.nuget.org/packages/Intercode.Toolbox.TemplateEngine)
