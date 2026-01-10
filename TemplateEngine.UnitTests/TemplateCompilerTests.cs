@@ -1006,6 +1006,278 @@ public class TemplateCompilerTests
     template.Should().HaveSingleSegment().Which.BeConstant( string.Empty );
   }
 
+  [Fact]
+  public void Compile_WithBuilder_ShouldThrowArgumentNullException_WhenBuilderIsNull()
+  {
+    Action act = () => TemplateCompiler.Compile( "text", builder: null! );
+
+    act.Should()
+       .Throw<ArgumentNullException>()
+       .WithParameterName( "builder" );
+  }
+
+  [Theory]
+  [InlineData( null )]
+  [InlineData( "" )]
+  [InlineData( "   " )]
+  public void Compile_WithBuilder_ShouldThrowArgumentException_WhenTextIsNullOrWhitespace(
+    string? text )
+  {
+    var builder = new MacroTableBuilder();
+    Action act = () => TemplateCompiler.Compile( text!, builder );
+
+    act.Should()
+       .Throw<ArgumentException>()
+       .WithParameterName( "text" )
+       .WithMessage( "*cannot be null, empty, or whitespace*" );
+  }
+
+  [Fact]
+  public void Compile_WithBuilder_ShouldReturnSingleConstantSegment_WhenTemplateHasNoMacros()
+  {
+    const string Text = "I have no macros";
+    var builder = new MacroTableBuilder();
+
+    var template = TemplateCompiler.Compile( Text, builder );
+
+    template.Should().HaveSingleSegment().Which.BeConstant( Text );
+  }
+
+  [Fact]
+  public void Compile_WithBuilder_ShouldReturnSingleMacroSegment_WhenTemplateIsOnlyTheMacro()
+  {
+    const string Text = "$macro$";
+    var builder = new MacroTableBuilder();
+
+    var template = TemplateCompiler.Compile( Text, builder );
+
+    template.Should().HaveSingleSegment().Which.BeMacro( "macro" );
+    template.MacroTable.Count.Should().Be( 1 );
+    template.MacroTable.GetSlot( "macro" ).Should().Be( 1 );
+  }
+
+  [Fact]
+  public void Compile_WithBuilder_ShouldDeclareMacrosAutomatically()
+  {
+    const string Text = "$macroA$$macroB$$macroC$";
+    var builder = new MacroTableBuilder();
+
+    var template = TemplateCompiler.Compile( Text, builder );
+
+    template.Should().HaveSegmentCount( 3 );
+    template.MacroTable.Count.Should().Be( 3 );
+    template.Should().HaveSegmentAt( 0 ).Which.BeMacro( "macroA" ).And.HaveSlot( 1 );
+    template.Should().HaveSegmentAt( 1 ).Which.BeMacro( "macroB" ).And.HaveSlot( 2 );
+    template.Should().HaveSegmentAt( 2 ).Which.BeMacro( "macroC" ).And.HaveSlot( 3 );
+  }
+
+  [Fact]
+  public void Compile_WithBuilder_ShouldReuseSlots_WhenMacroIsRepeated()
+  {
+    const string Text = "$macroA$$macroB$$macroA$";
+    var builder = new MacroTableBuilder();
+
+    var template = TemplateCompiler.Compile( Text, builder );
+
+    template.Should().HaveSegmentCount( 3 );
+    template.MacroTable.Count.Should().Be( 2 );
+    template.Should().HaveSegmentAt( 0 ).Which.BeMacro( "macroA" ).And.HaveSlot( 1 );
+    template.Should().HaveSegmentAt( 1 ).Which.BeMacro( "macroB" ).And.HaveSlot( 2 );
+    template.Should().HaveSegmentAt( 2 ).Which.BeMacro( "macroA" ).And.HaveSlot( 1 );
+  }
+
+  [Fact]
+  public void Compile_WithBuilder_ShouldHandleMacroWithArgument()
+  {
+    var builder = new MacroTableBuilder();
+    var template = TemplateCompiler.Compile( "$macro:argument$", builder );
+
+    template.Should().HaveSingleSegment().Which.BeMacro( "macro", "argument" );
+    template.MacroTable.Count.Should().Be( 1 );
+  }
+
+  [Fact]
+  public void Compile_WithBuilder_ShouldHandleEscapedDelimiters()
+  {
+    var builder = new MacroTableBuilder();
+    var template = TemplateCompiler.Compile( "Give me the $$!", builder );
+
+    template.Should().HaveSegmentCount( 2 );
+    template.Should().HaveSegmentAt( 0 ).Which.BeConstant( "Give me the $" );
+    template.Should().HaveSegmentAt( 1 ).Which.BeConstant( "!" );
+  }
+
+  [Fact]
+  public void Compile_WithBuilder_ShouldReturnThreeSegments_WhenConstantFollowedByMacroAndConstant()
+  {
+    var builder = new MacroTableBuilder();
+    var template = TemplateCompiler.Compile( "prefix$macro$suffix", builder );
+
+    template.Should().HaveSegmentCount( 3 );
+    template.Should().HaveSegmentAt( 0 ).Which.BeConstant( "prefix" );
+    template.Should().HaveSegmentAt( 1 ).Which.BeMacro( "macro" ).And.HaveSlot( 1 );
+    template.Should().HaveSegmentAt( 2 ).Which.BeConstant( "suffix" );
+  }
+
+  [Fact]
+  public void Compile_WithBuilder_ShouldHandleIncludes_WhenIncludesProvided()
+  {
+    var includes = new IncludesCollection();
+    includes.AddInclude( "header", "HeaderContent" );
+
+    var builder = new MacroTableBuilder();
+    var template = TemplateCompiler.Compile( "$header$ body", builder, includes );
+
+    template.Should().HaveText( "HeaderContent body" );
+    template.Should().HaveSingleSegment().Which.BeConstant( "HeaderContent body" );
+  }
+
+  [Fact]
+  public void Compile_WithBuilder_ShouldProcessMacrosInIncludeContent()
+  {
+    var includes = new IncludesCollection();
+    includes.AddInclude( "section", "Start $macro$ End" );
+
+    var builder = new MacroTableBuilder();
+    var template = TemplateCompiler.Compile( "$section$", builder, includes );
+
+    template.Should().HaveText( "Start $macro$ End" );
+    template.Should().HaveSegmentCount( 3 );
+    template.Should().HaveSegmentAt( 0 ).Which.BeConstant( "Start " );
+    template.Should().HaveSegmentAt( 1 ).Which.BeMacro( "macro" );
+    template.Should().HaveSegmentAt( 2 ).Which.BeConstant( " End" );
+    template.MacroTable.Count.Should().Be( 1 );
+  }
+
+  [Fact]
+  public void Compile_WithBuilder_ShouldHandleNullIncludesParameter()
+  {
+    const string Text = "$macro$";
+    var builder = new MacroTableBuilder();
+    var template = TemplateCompiler.Compile( Text, builder, null );
+
+    template.Should().HaveText( Text );
+    template.Should().HaveSingleSegment().Which.BeMacro( "macro" );
+  }
+
+  [Fact]
+  public void Compile_WithBuilder_ShouldSupportCustomDelimiterAndArgumentSeparator()
+  {
+    var options = new TemplateCompilerOptions( '#', ':' );
+    var builder = new MacroTableBuilder();
+    var template = TemplateCompiler.Compile( "#macro:arg#", builder, options: options );
+
+    template.Should().HaveSingleSegment().Which.BeMacro( "macro", "arg" );
+  }
+
+  [Fact]
+  public void Compile_WithBuilder_ShouldThrowArgumentException_WhenMacroNameIsEmptyButHasArgument()
+  {
+    var builder = new MacroTableBuilder();
+    Action act = () => TemplateCompiler.Compile( "$:arg$", builder );
+
+    act.Should().Throw<InvalidOperationException>().WithMessage( "The macro name cannot be empty" );
+  }
+
+  [Fact]
+  public void Compile_WithBuilder_ShouldPreservePreviouslyDeclaredMacros()
+  {
+    var builder = new MacroTableBuilder();
+    builder.Declare( "existing" );
+
+    var template = TemplateCompiler.Compile( "$new$", builder );
+
+    template.MacroTable.Count.Should().Be( 2 );
+    template.MacroTable.GetSlot( "existing" ).Should().Be( 1 );
+    template.MacroTable.GetSlot( "new" ).Should().Be( 2 );
+  }
+
+  [Fact]
+  public void Compile_WithBuilder_ShouldAllowMultipleTemplatesWithSameBuilder()
+  {
+    var builder = new MacroTableBuilder();
+
+    var template1 = TemplateCompiler.Compile( "$macro1$", builder );
+    var template2 = TemplateCompiler.Compile( "$macro2$", builder );
+
+    template1.MacroTable.Count.Should().Be( 1 );
+    template2.MacroTable.Count.Should().Be( 2 );
+    template2.MacroTable.GetSlot( "macro1" ).Should().Be( 1 );
+    template2.MacroTable.GetSlot( "macro2" ).Should().Be( 2 );
+  }
+
+  [Fact]
+  public void Compile_WithBuilder_ShouldHandleIncludeWithNullStringContent()
+  {
+    var includes = new IncludesCollection();
+    includes.AddInclude( "empty", ( string? ) null );
+
+    var builder = new MacroTableBuilder();
+    var template = TemplateCompiler.Compile( "$empty$", builder, includes );
+
+    template.Text.Should().BeEmpty();
+    template.Should().HaveSingleSegment().Which.BeConstant( string.Empty );
+  }
+
+  [Fact]
+  public void Compile_WithBuilder_ShouldHandleIncludeWithNullGenerator()
+  {
+    var includes = new IncludesCollection();
+    includes.AddInclude( "empty", ( MacroValueGenerator? ) null );
+
+    var builder = new MacroTableBuilder();
+    var template = TemplateCompiler.Compile( "$empty$", builder, includes );
+
+    template.Text.Should().BeEmpty();
+    template.Should().HaveSingleSegment().Which.BeConstant( string.Empty );
+  }
+
+  [Fact]
+  public void Compile_WithBuilder_ShouldHandleConstantFollowedByEscapedDelimiter()
+  {
+    var builder = new MacroTableBuilder();
+    var template = TemplateCompiler.Compile( "text$$", builder );
+
+    template.Should().HaveSingleSegment().Which.BeConstant( "text$" );
+  }
+
+  [Fact]
+  public void Compile_WithBuilder_ShouldHandleUnclosedMacro()
+  {
+    const string Text = "$macro";
+    var builder = new MacroTableBuilder();
+    var template = TemplateCompiler.Compile( Text, builder );
+
+    template.Should().HaveSingleSegment().Which.BeConstant( "$macro" );
+  }
+
+  [Fact]
+  public void Compile_WithBuilder_ShouldNotTreatPlaceholderWithArgumentAsInclude_WhenNameMatchesInclude()
+  {
+    var includes = new IncludesCollection();
+    includes.AddInclude( "x", "INC" );
+
+    var builder = new MacroTableBuilder();
+    var template = TemplateCompiler.Compile( "$x:arg$", builder, includes );
+
+    template.Should().HaveText( "$x:arg$" );
+    template.Should().HaveSingleSegment().Which.BeMacro( "x", "arg" );
+  }
+
+  [Fact]
+  public void Compile_WithBuilder_ShouldReplaceMultipleIncludes_WhenMultipleAreReferenced()
+  {
+    var includes = new IncludesCollection();
+    includes.AddInclude( "a", "A" );
+    includes.AddInclude( "b", "B" );
+
+    var builder = new MacroTableBuilder();
+    var template = TemplateCompiler.Compile( "$a$-$b$", builder, includes );
+
+    template.Should().HaveText( "A-B" );
+    template.Should().HaveSingleSegment().Which.BeConstant( "A-B" );
+  }
+
   #endregion
 
   #region Implementation

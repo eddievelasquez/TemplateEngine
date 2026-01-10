@@ -5,87 +5,90 @@
 namespace Intercode.Toolbox.TemplateEngine;
 
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.InteropServices;
+using System.Text;
+
+#if false
+[StructLayout( LayoutKind.Sequential,Pack = 1 )]
+internal struct IfElseSegment
+{
+  #region Fields
+
+  public int PredicateNameStart;
+  public byte PredicateNameLength;
+  public byte ArgumentLength;
+  public int IfBlockLength;
+  public int ElseBlockLength;
+
+  #endregion
+}
+#endif
 
 /// <summary>
-///   Represents a text segment in a <see cref="Template" />.
+///   Represents a parsed segment of a template, which can be either a constant text region or a macro invocation.
 /// </summary>
+/// <remarks>
+///   This struct uses explicit layout to create a discriminated union, storing either a <see cref="ConstantSegment" />
+///   or a <see cref="MacroSegment" /> based on the <see cref="Kind" /> discriminator. The struct is optimized to be
+///   exactly 16 bytes in size for efficient memory usage and cache performance.
+/// </remarks>
+[StructLayout( LayoutKind.Explicit, Size = 16 )]
 [DebuggerDisplay( "{GetDebuggerString()}" )]
-internal readonly record struct Segment
+[SuppressMessage( "ReSharper", "ConvertToAutoPropertyWhenPossible" )]
+[SuppressMessage( "ReSharper", "ConvertToAutoProperty" )]
+internal readonly struct Segment
 {
   #region Constants
 
-  public static readonly Segment Empty = new ( -1, 0 );
+  /// <summary>
+  ///   Represents an empty constant segment with zero length.
+  /// </summary>
+  public static Segment Empty = CreateConstant( 0, 0 );
 
   #endregion
 
   #region Fields
 
-  private readonly int _textStart;
-  private readonly int _argumentStart;
-  private readonly ushort _textLength;
-  private readonly ushort _argumentLength;
-  private readonly short _slot;
+  [FieldOffset( 0 )]
+  private readonly SegmentKind _kind;
+
+  // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
+  [FieldOffset( 1 )]
+  private readonly byte _reserved;
+
+  [FieldOffset( 2 )]
+  private readonly ConstantSegment _constant;
+
+  [FieldOffset( 2 )]
+  private readonly MacroSegment _macro;
 
   #endregion
 
   #region Constructors
 
+  /// <summary>
+  ///   Initializes a new instance of the <see cref="Segment" /> struct as a constant segment.
+  /// </summary>
+  /// <param name="constantSegment">The constant segment data.</param>
   private Segment(
-    int start,
-    int length,
-    int argumentStart,
-    int argumentLength,
-    int slot )
+    ConstantSegment constantSegment )
   {
-    if( length > ushort.MaxValue )
-    {
-      throw new ArgumentOutOfRangeException(
-        nameof( length ),
-        "Length cannot exceed " + ushort.MaxValue
-      );
-    }
-
-    if( argumentLength > ushort.MaxValue )
-    {
-      throw new ArgumentOutOfRangeException(
-        nameof( argumentLength ),
-        "Argument length cannot exceed " + ushort.MaxValue
-      );
-    }
-
-    if( slot > short.MaxValue )
-    {
-      throw new ArgumentOutOfRangeException(
-        nameof( slot ),
-        "Slot cannot exceed " + short.MaxValue
-      );
-    }
-
-    _textStart = start;
-    _textLength = ( ushort ) length;
-    _argumentStart = argumentStart;
-    _argumentLength = ( ushort ) argumentLength;
-    _slot = ( short ) slot;
+    _kind = SegmentKind.Constant;
+    _constant = constantSegment;
   }
 
+  /// <summary>
+  ///   Initializes a new instance of the <see cref="Segment" /> struct as a macro segment.
+  /// </summary>
+  /// <param name="kind">The kind of macro segment (user-defined or standard).</param>
+  /// <param name="macroSegment">The macro segment data.</param>
   private Segment(
-    int start,
-    int length )
+    SegmentKind kind,
+    MacroSegment macroSegment )
   {
-    if( length > ushort.MaxValue )
-    {
-      throw new ArgumentOutOfRangeException(
-        nameof( length ),
-        "Length cannot exceed " + ushort.MaxValue
-      );
-    }
-
-    _textStart = start;
-    _textLength = ( ushort ) length;
-    _argumentStart = -1;
-    _argumentLength = 0;
-    _slot = MacroTable.MacroNotFoundSlot;
+    _kind = kind;
+    _macro = macroSegment;
   }
 
   #endregion
@@ -93,179 +96,186 @@ internal readonly record struct Segment
   #region Properties
 
   /// <summary>
-  ///   Gets the slot identifier associated with the segment.
+  ///   Gets the kind of segment, indicating whether it represents a constant, user macro, or standard macro.
   /// </summary>
-  /// <remarks>
-  ///   The slot is used to identify and retrieve the value of a macro during template processing.
-  ///   A non-negative value indicates that the segment represents a macro.
-  /// </remarks>
-  public int Slot => _slot;
+  public SegmentKind Kind => _kind;
 
   /// <summary>
-  ///   Gets a value indicating whether the segment represents a macro.
+  ///   Gets the constant segment data. Only valid when <see cref="Kind" /> is <see cref="SegmentKind.Constant" />.
   /// </summary>
-  /// <value>
-  ///   <see langword="true" /> if the segment is a macro; otherwise, <see langword="false" />.
-  /// </value>
-  public bool IsMacro => _slot != MacroTable.MacroNotFoundSlot;
+  public ConstantSegment Constant => _constant;
 
   /// <summary>
-  ///   Gets a value indicating whether the segment is constant.
+  ///   Gets the macro segment data. Only valid when <see cref="Kind" /> is <see cref="SegmentKind.UserMacro" />
+  ///   or <see cref="SegmentKind.StandardMacro" />.
   /// </summary>
-  /// <value>
-  ///   <c>true</c> if the segment is constant; otherwise, <c>false</c>.
-  ///   A segment is considered constant if it is not a macro.
-  /// </value>
-  public bool IsConstant => !IsMacro;
+  public MacroSegment Macro => _macro;
 
   #endregion
 
   #region Public Methods
 
   /// <summary>
-  ///   Retrieves the text content of the segment from the specified <see cref="Template" />.
+  ///   Creates a constant segment representing a literal text region within a template.
   /// </summary>
-  /// <param name="template">
-  ///   The <see cref="Template" /> instance containing the text from which the segment's content is extracted.
-  /// </param>
-  /// <returns>
-  ///   A <see cref="string" /> representing the text content of the segment. Returns an empty string if the segment has no
-  ///   content.
-  /// </returns>
-  public string GetText(
-    Template template )
-  {
-    return _textLength != 0 ? template.Text.Substring( _textStart, _textLength ) : string.Empty;
-  }
-
-  /// <summary>
-  ///   Retrieves the text span of the segment from the specified <see cref="Template" />.
-  /// </summary>
-  /// <param name="template">
-  ///   The <see cref="Template" /> instance containing the text from which the segment's span is extracted.
-  /// </param>
-  /// <returns>
-  ///   A <see cref="ReadOnlySpan{Char}" /> representing the text span of the segment. Returns an empty span if the segment
-  ///   has no content.
-  /// </returns>
-  public ReadOnlySpan<char> GetTextSpan(
-    Template template )
-  {
-    return _textLength != 0
-      ? template.Text.AsSpan( _textStart, _textLength )
-      : ReadOnlySpan<char>.Empty;
-  }
-
-  /// <summary>
-  ///   Retrieves the optional argument of a macro segment from the specified <see cref="Template" />.
-  /// </summary>
-  /// <param name="template">
-  ///   The <see cref="Template" /> instance containing the text from which the macro's argument is extracted.
-  /// </param>
-  /// <returns>
-  ///   A <see cref="ReadOnlySpan{Char}" /> representing the macro's argument. Returns an empty span if the macro has no
-  ///   argument.
-  /// </returns>
-  public ReadOnlySpan<char> GetArgumentSpan(
-    Template template )
-  {
-    return _argumentLength != 0
-      ? template.Text.AsSpan( _argumentStart, _argumentLength )
-      : ReadOnlySpan<char>.Empty;
-  }
-
-  /// <summary>
-  ///   Creates a constant segment with the specified starting position and length.
-  /// </summary>
-  /// <param name="start">
-  ///   The starting position of the segment within the text.
-  /// </param>
-  /// <param name="length">
-  ///   The length of the segment.
-  /// </param>
-  /// <returns>
-  ///   A new <see cref="Segment" /> instance representing a constant segment.
-  /// </returns>
-  [MethodImpl( MethodImplOptions.AggressiveInlining )]
+  /// <param name="textStart">The zero-based starting index of the constant text in the template source.</param>
+  /// <param name="textLength">The length of the constant text in characters.</param>
+  /// <returns>A new <see cref="Segment" /> instance configured as a constant segment.</returns>
+  /// <exception cref="ArgumentOutOfRangeException">
+  ///   Thrown when <paramref name="textStart" /> or <paramref name="textLength" /> is negative.
+  /// </exception>
   public static Segment CreateConstant(
-    int start,
-    int length )
+    int textStart,
+    int textLength )
   {
-    return new Segment( start, length );
+    return new Segment( new ConstantSegment( textStart, textLength ) );
   }
 
   /// <summary>
-  ///   Creates a macro segment with the specified parameters.
+  ///   Creates a macro segment with automatic determination of the macro kind based on the slot value.
   /// </summary>
-  /// <param name="start">
-  ///   The starting position of the macro segment within the text.
-  /// </param>
-  /// <param name="length">
-  ///   The length of the macro segment.
-  /// </param>
-  /// <param name="argumentStart">
-  ///   The starting position of the macro's argument within the text.
-  /// </param>
-  /// <param name="argumentLength">
-  ///   The length of the macro's argument.
-  /// </param>
   /// <param name="slot">
-  ///   The slot index associated with the macro's value.
+  ///   The slot index where the macro resolver is stored. Negative values indicate a standard macro;
+  ///   non-negative values indicate a user-defined macro. Valid range is [-32768, 65535].
   /// </param>
+  /// <param name="nameStart">The zero-based starting index of the macro name in the template source.</param>
+  /// <param name="nameLength">The length of the macro name in characters. Must be in the range [1, 65535].</param>
+  /// <param name="argumentStart">
+  ///   The zero-based starting index of the macro argument in the template source, or -1 if no
+  ///   argument is present.
+  /// </param>
+  /// <param name="argumentLength">The length of the macro argument in characters. Must be in the range [0, 65535].</param>
   /// <returns>
-  ///   A new <see cref="Segment" /> representing a macro segment.
+  ///   A new <see cref="Segment" /> instance configured as either a standard macro segment (if <paramref name="slot" /> is
+  ///   negative)
+  ///   or a user macro segment (if <paramref name="slot" /> is non-negative).
   /// </returns>
-  [MethodImpl( MethodImplOptions.AggressiveInlining )]
+  /// <exception cref="ArgumentOutOfRangeException">
+  ///   Thrown when any parameter is outside its valid range.
+  /// </exception>
+  /// <remarks>
+  ///   This method provides a convenient way to create macro segments without explicitly specifying the macro kind.
+  ///   The sign of the <paramref name="slot" /> parameter determines whether a standard or user-defined macro is created.
+  /// </remarks>
   public static Segment CreateMacro(
-    int start,
-    int length,
+    int slot,
+    int nameStart,
+    int nameLength,
     int argumentStart,
-    int argumentLength,
-    int slot )
+    int argumentLength )
   {
-    return new Segment( start, length, argumentStart, argumentLength, slot );
+    return new Segment(
+      slot < 0 ? SegmentKind.StandardMacro : SegmentKind.UserMacro,
+      new MacroSegment(
+        Math.Abs( slot ),
+        nameStart,
+        nameLength,
+        argumentStart,
+        argumentLength
+      )
+    );
+  }
+
+  /// <summary>
+  ///   Creates a user-defined macro segment representing a custom macro invocation within a template.
+  /// </summary>
+  /// <param name="slot">The slot index where the macro resolver is stored. Must be in the range [0, 65535].</param>
+  /// <param name="nameStart">The zero-based starting index of the macro name in the template source.</param>
+  /// <param name="nameLength">The length of the macro name in characters. Must be in the range [1, 65535].</param>
+  /// <param name="argumentStart">
+  ///   The zero-based starting index of the macro argument in the template source, or -1 if no
+  ///   argument is present.
+  /// </param>
+  /// <param name="argumentLength">The length of the macro argument in characters. Must be in the range [0, 65535].</param>
+  /// <returns>A new <see cref="Segment" /> instance configured as a user macro segment.</returns>
+  /// <exception cref="ArgumentOutOfRangeException">
+  ///   Thrown when any parameter is outside its valid range.
+  /// </exception>
+  [Obsolete(
+    "Use CreateMacro with a non-negative slot value instead. This method will be removed in a future version."
+  )]
+  public static Segment CreateUserMacro(
+    int slot,
+    int nameStart,
+    int nameLength,
+    int argumentStart,
+    int argumentLength )
+  {
+    return new Segment(
+      SegmentKind.UserMacro,
+      new MacroSegment(
+        slot,
+        nameStart,
+        nameLength,
+        argumentStart,
+        argumentLength
+      )
+    );
+  }
+
+  /// <summary>
+  ///   Creates a standard macro segment representing a built-in macro invocation within a template.
+  /// </summary>
+  /// <param name="slot">The slot index where the standard macro handler is stored. Must be in the range [0, 65535].</param>
+  /// <param name="nameStart">The zero-based starting index of the macro name in the template source.</param>
+  /// <param name="nameLength">The length of the macro name in characters. Must be in the range [1, 65535].</param>
+  /// <param name="argumentStart">
+  ///   The zero-based starting index of the macro argument in the template source, or -1 if no
+  ///   argument is present.
+  /// </param>
+  /// <param name="argumentLength">The length of the macro argument in characters. Must be in the range [0, 65535].</param>
+  /// <returns>A new <see cref="Segment" /> instance configured as a standard macro segment.</returns>
+  /// <exception cref="ArgumentOutOfRangeException">
+  ///   Thrown when any parameter is outside its valid range.
+  /// </exception>
+  [Obsolete(
+    "Use CreateMacro with a negative slot value instead. This method will be removed in a future version."
+  )]
+  public static Segment CreateStandardMacro(
+    int slot,
+    int nameStart,
+    int nameLength,
+    int argumentStart,
+    int argumentLength )
+  {
+    return new Segment(
+      SegmentKind.StandardMacro,
+      new MacroSegment(
+        slot,
+        nameStart,
+        nameLength,
+        argumentStart,
+        argumentLength
+      )
+    );
   }
 
   #endregion
 
   #region Implementation
 
-  private string GetDebuggerString()
+  /// <summary>
+  ///   Generates a human-readable string representation of the segment for debugging purposes.
+  /// </summary>
+  /// <returns>A formatted string describing the segment's type and contents.</returns>
+  /// <remarks>
+  ///   This method is used by the debugger display attribute and utilizes a pooled <see cref="StringBuilder" />
+  ///   to minimize allocations during debugging sessions.
+  /// </remarks>
+  internal string GetDebuggerString()
   {
     var builder = StringBuilderPool.Default.Get();
 
     try
     {
-      if( IsMacro )
+      if( _kind == SegmentKind.Constant )
       {
-        builder.Append( "Macro { " );
-        builder.Append( "Slot: " );
-        builder.Append( Slot );
-        builder.Append( ", NameStart: " );
-        builder.Append( _textStart );
-        builder.Append( ", NameLength: " );
-        builder.Append( _textLength );
-
-        if( _argumentLength > 0 )
-        {
-          builder.Append( ", ArgumentStart: " );
-          builder.Append( _argumentStart );
-          builder.Append( ", ArgumentLength: " );
-          builder.Append( _argumentLength );
-        }
-
-        builder.Append( " }" );
+        Constant.GetDebuggerString( builder );
+        return builder.ToString();
       }
-      else
-      {
-        builder.Append( "Constant { " );
-        builder.Append( "TextStart: " );
-        builder.Append( _textStart );
-        builder.Append( ", TextLength: " );
-        builder.Append( _textLength );
 
-        builder.Append( " }" );
-      }
+      builder.Append( _kind == SegmentKind.StandardMacro ? "Standard" : "User" );
+      Macro.GetDebuggerString( builder );
 
       return builder.ToString();
     }

@@ -49,30 +49,34 @@ public static class MacroProcessor
     {
       var segment = segments[index];
 
-      if( segment.IsMacro )
+      if( segment.Kind == SegmentKind.Constant )
       {
-        string value;
+#if NET6_0_OR_GREATER
+        writer.Write( segment.Constant.GetTextSpan( template ) );
+#else
 
-        try
-        {
-          value = macroValues.GetValue( segment.Slot, segment.GetArgumentSpan( template ) ) ??
-                  string.Empty;
-        }
-        catch( Exception exception )
-        {
-          value = exception.Message;
-        }
-
-        writer.Write( value );
+        // The .netstandard2.0 TextWriter.Write method does not have a Span overload.
+        writer.Write( segment.Constant.GetText( template ) );
+#endif
         continue;
       }
 
-#if NET6_0_OR_GREATER
-      writer.Write( segment.GetTextSpan( template ) );
-#else
-      // The .netstandard2.0 TextWriter.Write method does not have a Span overload.
-      writer.Write( segment.GetText( template ) );
-#endif
+      // Handle macro segments (UserMacro or StandardMacro)
+      string value;
+
+      try
+      {
+        var macro = segment.Macro;
+        var slot = segment.Kind == SegmentKind.StandardMacro ? -macro.Slot : macro.Slot;
+
+        value = macroValues.GetValue( slot, macro.GetArgumentSpan( template ) ) ?? string.Empty;
+      }
+      catch( Exception exception )
+      {
+        value = exception.Message;
+      }
+
+      writer.Write( value );
     }
   }
 
@@ -102,7 +106,7 @@ public static class MacroProcessor
       );
     }
 
-    // Pre-allocate the StringBuilder capacity to avoid multiple allocations during appends
+    // Pre-allocate the StringBuilder capacity to avoid multiple allocations during appends as much as possible
     builder.EnsureCapacity( template.Text.Length );
 
     var segments = template.Segments;
@@ -112,30 +116,34 @@ public static class MacroProcessor
     {
       var segment = segments[index];
 
-      if( segment.IsMacro )
+      if( segment.Kind == SegmentKind.Constant )
       {
-        string value;
+#if NET6_0_OR_GREATER
+        builder.Append( segment.Constant.GetTextSpan( template ) );
+#else
 
-        try
-        {
-          value = macroValues.GetValue( segment.Slot, segment.GetArgumentSpan( template ) ) ??
-                  string.Empty;
-        }
-        catch( Exception exception )
-        {
-          value = exception.Message;
-        }
-
-        builder.Append( value );
+        // The .netstandard2.0 StringBuilder.Append method does not have a Span overload.
+        builder.Append( segment.Constant.GetText( template ) );
+#endif
         continue;
       }
 
-#if NET6_0_OR_GREATER
-      builder.Append( segment.GetTextSpan( template ) );
-#else
-      // The .netstandard2.0 StringBuilder.Append method does not have a Span overload.
-      builder.Append( segment.GetText( template ) );
-#endif
+      // Handle macro segments (UserMacro or StandardMacro)
+      string value;
+
+      try
+      {
+        var macro = segment.Macro;
+        var slot = segment.Kind == SegmentKind.StandardMacro ? -macro.Slot : macro.Slot;
+
+        value = macroValues.GetValue( slot, macro.GetArgumentSpan( template ) ) ?? string.Empty;
+      }
+      catch( Exception exception )
+      {
+        value = exception.Message;
+      }
+
+      builder.Append( value );
     }
   }
 
@@ -161,7 +169,7 @@ public static class MacroProcessor
 
     try
     {
-      ProcessMacros( template, builder, macroValues );
+      template.ProcessMacros( builder, macroValues );
       return builder.ToString();
     }
     finally
@@ -195,7 +203,7 @@ public static class MacroProcessor
       );
     }
 
-    // Pre-allocate the StringBuilder capacity to avoid multiple allocations during appends
+    // Pre-allocate the StringBuilder capacity to avoid multiple allocations during appends as much as possible
     builder.EnsureCapacity( template.Text.Length );
 
     var segments = template.Segments;
@@ -205,29 +213,38 @@ public static class MacroProcessor
     {
       var segment = segments[index];
 
-      if( segment.IsMacro )
+      if( segment.Kind == SegmentKind.Constant )
       {
-        var slot = segment.Slot;
+#if NET6_0_OR_GREATER
+        builder.Append( segment.Constant.GetTextSpan( template ) );
+#else
 
-        // Negative slots are standard macros.
-        var value = slot < MacroTable.MacroNotFoundSlot
-          ? StandardMacros.GetValue( slot )
-          : values[slot - 1];
-
-        if( value is not null )
-        {
-          builder.Append( value );
-        }
-
+        // The .netstandard2.0 StringBuilder.Append method does not have a Span overload.
+        builder.Append( segment.Constant.GetText( template ) );
+#endif
         continue;
       }
 
-#if NET6_0_OR_GREATER
-      builder.Append( segment.GetTextSpan( template ) );
-#else
-      // The .netstandard2.0 StringBuilder.Append method does not have a Span overload.
-      builder.Append( segment.GetText( template ) );
-#endif
+      // Handle macro segments (UserMacro or StandardMacro)
+      var macro = segment.Macro;
+      var slot = segment.Kind == SegmentKind.StandardMacro ? -macro.Slot : macro.Slot;
+
+      string? value;
+
+      // Negative slots are standard macros.
+      if( slot < 0 )
+      {
+        value = StandardMacros.GetValue( slot );
+      }
+      else
+      {
+        value = values[slot - 1];
+      }
+
+      if( value is not null )
+      {
+        builder.Append( value );
+      }
     }
   }
 
@@ -272,7 +289,7 @@ public static class MacroProcessor
 
     try
     {
-      ProcessMacros( template, builder, values );
+      template.ProcessMacros( builder, values );
       return builder.ToString();
     }
     finally

@@ -386,6 +386,91 @@ public class MacroProcessorTests
     Guid.TryParse( result, out _ ).Should().BeTrue();
   }
 
+  [Fact]
+  public void ProcessMacros_WithTextWriter_ShouldHandleEmptyTemplate()
+  {
+    var table = new MacroTableBuilder().Build();
+    var values = table.CreateValues();
+    var template = TemplateCompiler.Compile( "x", table );
+
+    using var writer = new StringWriter();
+    template.ProcessMacros( writer, values );
+
+    writer.ToString().Should().Be( "x" );
+  }
+
+  [Fact]
+  public void ProcessMacros_WithTextWriter_ShouldHandleMultipleMacros()
+  {
+    var values = CreateStaticMacroValues( ( "A", "1" ), ( "B", "2" ), ( "C", "3" ) );
+    var template = TemplateCompiler.Compile( "$A$-$B$-$C$", values.MacroTable );
+
+    using var writer = new StringWriter();
+    template.ProcessMacros( writer, values );
+
+    writer.ToString().Should().Be( "1-2-3" );
+  }
+
+  [Fact]
+  public void ProcessMacros_WithStringBuilder_ShouldHandleMultipleMacros()
+  {
+    var values = CreateStaticMacroValues( ( "A", "1" ), ( "B", "2" ), ( "C", "3" ) );
+    var template = TemplateCompiler.Compile( "$A$-$B$-$C$", values.MacroTable );
+
+    var builder = new StringBuilder();
+    template.ProcessMacros( builder, values );
+
+    builder.ToString().Should().Be( "1-2-3" );
+  }
+
+  [Fact]
+  public void ProcessMacros_WithValuesArray_ShouldHandleMultipleMacros()
+  {
+    var table = new MacroTableBuilder().Declare( "A" ).Declare( "B" ).Declare( "C" ).Build();
+    var template = TemplateCompiler.Compile( "$A$-$B$-$C$", table );
+
+    var builder = new StringBuilder();
+    template.ProcessMacros( builder, "1", "2", "3" );
+
+    builder.ToString().Should().Be( "1-2-3" );
+  }
+
+  [Fact]
+  public void ProcessMacros_WithValuesSpan_ShouldHandleTemplateWithOnlyConstant()
+  {
+    var table = new MacroTableBuilder().Build();
+    var template = TemplateCompiler.Compile( "constant", table );
+
+    var builder = new StringBuilder();
+    template.ProcessMacros( builder, ReadOnlySpan<string?>.Empty );
+
+    builder.ToString().Should().Be( "constant" );
+  }
+
+  [Fact]
+  public void ProcessMacros_WithValuesArray_ShouldHandleNullValues()
+  {
+    var table = new MacroTableBuilder().Declare( "A" ).Declare( "B" ).Build();
+    var template = TemplateCompiler.Compile( "X$A$Y$B$Z", table );
+
+    var builder = new StringBuilder();
+    template.ProcessMacros( builder, null, null );
+
+    builder.ToString().Should().Be( "XYZ" );
+  }
+
+  [Fact]
+  public void ProcessMacros_ReturningString_WithMacroValues_ShouldHandleTemplateWithOnlyConstant()
+  {
+    var table = new MacroTableBuilder().Build();
+    var values = table.CreateValues();
+    var template = TemplateCompiler.Compile( "constant", table );
+
+    var result = template.ProcessMacros( values );
+
+    result.Should().Be( "constant" );
+  }
+
   #endregion
 
   #region Implementation

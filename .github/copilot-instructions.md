@@ -18,6 +18,11 @@ This repository targets modern .NET (currently .NET 9.0) and C# 13.0. Use the mo
 - Avoid `#region` except for large interop blocks or generated code.
 - Avoid the null-forgiving operator (`!`) unless accompanied by a short justification comment.
 
+## Comments
+- Write eloquent, but concise comments and only comment on what is not obvious to a skilled programmer by reading the code.
+- Comments should contain proper grammer and punctuation and should be prose-likem rather tahn choppy partial sentences.
+- A human reading your code's comments should feel like they are reading a well-written professional whitepaper.
+
 ## Nullability & Contracts
 - Nullable reference types must be enabled in every project.
 - Use appropriate annotations (`NotNullWhen`, `MemberNotNull`, `DisallowNull`, etc.) to express contracts.
