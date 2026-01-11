@@ -176,6 +176,7 @@ public partial class MacroProcessingBenchmarks
   private readonly Template _template;
   private readonly MacroValues _dynamicMacroValues;
   private readonly CompositeFormat _compositeFormat;
+  private readonly StringBuilder _stringBuilder;
 
   #endregion
 
@@ -204,6 +205,9 @@ public partial class MacroProcessingBenchmarks
     // Compile templates
     _template = TemplateCompiler.Compile( TemplateText, macroTable );
     _compositeFormat = CompositeFormat.Parse( TemplateTextFormat );
+
+    // Pre-allocate StringBuilder
+    _stringBuilder = new StringBuilder( ( int ) ( TemplateText.Length * 1.5 ) );
   }
 
   #endregion
@@ -227,7 +231,7 @@ public partial class MacroProcessingBenchmarks
   #region Public Methods
 
   [Benchmark]
-  public string MacroProcessor_WithStringParams()
+  public string MacroProcessor_PooledStringBuilder_WithStringParams()
   {
     return _template.ProcessMacros(
       "MyApp.Primitives",
@@ -241,9 +245,38 @@ public partial class MacroProcessingBenchmarks
   }
 
   [Benchmark]
-  public string MacroProcessor_WithMacrosValues()
+  public string MacroProcessor_PooledStringBuilder_WithMacrosValues()
   {
     return _template.ProcessMacros( _dynamicMacroValues );
+  }
+
+  [Benchmark]
+  public string MacroProcessor_PreallocatedStringBuilder_WithStringParams()
+  {
+    _stringBuilder.Clear();
+
+    _template.ProcessMacros(
+      _stringBuilder,
+      "MyApp.Primitives",
+      "Type",
+      "MyApp.Primitives.Type",
+      "string",
+      "String",
+      "reader.GetString()",
+      "writer.WriteStringValue( value.Value )"
+    );
+
+    return _stringBuilder.ToString();
+  }
+
+  [Benchmark]
+  public string MacroProcessor_PreallocatedStringBuilder_WithMacrosValues()
+  {
+    _stringBuilder.Clear();
+
+    _template.ProcessMacros( _stringBuilder, _dynamicMacroValues );
+
+    return _stringBuilder.ToString();
   }
 
   [Benchmark]
