@@ -20,6 +20,15 @@
           "System.Management": "9.0.5"
         }
       },
+      "Microsoft.VisualStudio.DiagnosticsHub.BenchmarkDotNetDiagnosers": {
+        "type": "Direct",
+        "requested": "[18.3.36812.1, )",
+        "resolved": "18.3.36812.1",
+        "contentHash": "C2AbM770Sz+pw9F4L2Ul2ri2p3mWtxmVq1jTR7yg8pL+xzuEPw2ckdElG7Ei8mmIc6Pk1Dx6MNfUjmlIPoR1gA==",
+        "dependencies": {
+          "BenchmarkDotNet": "0.15.0"
+        }
+      },
       "BenchmarkDotNet.Annotations": {
         "type": "Transitive",
         "resolved": "0.15.2",
@@ -257,6 +266,15 @@
           "Microsoft.DotNet.PlatformAbstractions": "3.1.6",
           "Perfolizer": "[0.5.3]",
           "System.Management": "9.0.5"
+        }
+      },
+      "Microsoft.VisualStudio.DiagnosticsHub.BenchmarkDotNetDiagnosers": {
+        "type": "Direct",
+        "requested": "[18.3.36812.1, )",
+        "resolved": "18.3.36812.1",
+        "contentHash": "C2AbM770Sz+pw9F4L2Ul2ri2p3mWtxmVq1jTR7yg8pL+xzuEPw2ckdElG7Ei8mmIc6Pk1Dx6MNfUjmlIPoR1gA==",
+        "dependencies": {
+          "BenchmarkDotNet": "0.15.0"
         }
       },
       "BenchmarkDotNet.Annotations": {

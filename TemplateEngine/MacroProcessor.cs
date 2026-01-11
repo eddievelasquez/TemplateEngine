@@ -1,6 +1,6 @@
 // Module Name: MacroProcessor.cs
 // Author:      Eduardo Velasquez
-// Copyright (c) 2025, Intercode Consulting, Inc.
+// Copyright (c) 2026, Intercode Consulting, Inc.
 
 namespace Intercode.Toolbox.TemplateEngine;
 
@@ -49,6 +49,7 @@ public static class MacroProcessor
     {
       var segment = segments[index];
 
+      // Handle constant segments
       if( segment.Kind == SegmentKind.Constant )
       {
 #if NET6_0_OR_GREATER
@@ -77,37 +78,6 @@ public static class MacroProcessor
       }
 
       builder.Append( value );
-    }
-  }
-
-  /// <summary>
-  ///   Processes macros in the specified <see cref="Template" /> and returns the resulting string.
-  /// </summary>
-  /// <param name="template">The <see cref="Template" /> containing the macros to process.</param>
-  /// <param name="macroValues">The <see cref="MacroValues" /> providing values for the macros in the template.</param>
-  /// <returns>A string with the macros in the template replaced by their corresponding values.</returns>
-  /// <remarks>
-  ///   This method processes the macros in the provided template using the specified macro values.
-  ///   It utilizes a pooled <see cref="StringBuilder" /> for efficient string manipulation.
-  /// </remarks>
-  /// <exception cref="ArgumentNullException">
-  ///   Thrown if <paramref name="template" /> or <paramref name="macroValues" /> is <c>null</c>.
-  /// </exception>
-  public static string ProcessMacros(
-    this Template template,
-    MacroValues macroValues )
-  {
-    var pool = StringBuilderPool.Default;
-    var builder = pool.Get();
-
-    try
-    {
-      template.ProcessMacros( builder, macroValues );
-      return builder.ToString();
-    }
-    finally
-    {
-      pool.Return( builder );
     }
   }
 
@@ -146,6 +116,7 @@ public static class MacroProcessor
     {
       var segment = segments[index];
 
+      // Handle constant segments
       if( segment.Kind == SegmentKind.Constant )
       {
 #if NET6_0_OR_GREATER
@@ -199,6 +170,37 @@ public static class MacroProcessor
     params string?[] values )
   {
     template.ProcessMacros( builder, values.AsSpan() );
+  }
+
+  /// <summary>
+  ///   Processes macros in the specified <see cref="Template" /> and returns the resulting string.
+  /// </summary>
+  /// <param name="template">The <see cref="Template" /> containing the macros to process.</param>
+  /// <param name="macroValues">The <see cref="MacroValues" /> providing values for the macros in the template.</param>
+  /// <returns>A string with the macros in the template replaced by their corresponding values.</returns>
+  /// <remarks>
+  ///   This method processes the macros in the provided template using the specified macro values.
+  ///   It utilizes a pooled <see cref="StringBuilder" /> for efficient string manipulation.
+  /// </remarks>
+  /// <exception cref="ArgumentNullException">
+  ///   Thrown if <paramref name="template" /> or <paramref name="macroValues" /> is <c>null</c>.
+  /// </exception>
+  public static string ProcessMacros(
+    this Template template,
+    MacroValues macroValues )
+  {
+    var pool = StringBuilderPool.Default;
+    var builder = pool.Get();
+
+    try
+    {
+      template.ProcessMacros( builder, macroValues );
+      return builder.ToString();
+    }
+    finally
+    {
+      pool.Return( builder );
+    }
   }
 
   /// <summary>

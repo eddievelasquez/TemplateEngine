@@ -4,7 +4,7 @@
 
 #pragma warning disable CS0618 // Type or member is obsolete
 
-namespace Intercode.Toolbox.TemplateEngine.Benchmarks;
+namespace TemplateEngine.Benchmarks;
 
 using System.Globalization;
 using System.Text;
@@ -13,6 +13,7 @@ using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Columns;
 using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Reports;
+using Intercode.Toolbox.TemplateEngine;
 
 [Config( typeof( Config ) )]
 [MemoryDiagnoser]

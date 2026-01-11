@@ -1,10 +1,11 @@
 // Module Name: StringBuilderPool.cs
 // Author:      Eduardo Velasquez
-// Copyright (c) 2024, Intercode Consulting, Inc.
+// Copyright (c) 2025, Intercode Consulting, Inc.
 
 namespace Intercode.Toolbox.TemplateEngine;
 
 using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 /// <summary>
@@ -15,8 +16,9 @@ public class StringBuilderPool
 {
   #region Fields
 
-  private readonly ConcurrentBag<StringBuilder> _pool;
+  private readonly ConcurrentQueue<StringBuilder> _pool;
   private readonly int _initialBuilderCapacity;
+  private int _count;
 
   #endregion
 
@@ -33,7 +35,7 @@ public class StringBuilderPool
   {
     _initialBuilderCapacity = initialBuilderCapacity;
     MaxPoolSize = maxPoolSize;
-    _pool = new ConcurrentBag<StringBuilder>();
+    _pool = new ConcurrentQueue<StringBuilder>();
   }
 
   #endregion
@@ -48,7 +50,7 @@ public class StringBuilderPool
   /// <summary>
   ///   The number of <see cref="StringBuilder" /> instances in the pool.
   /// </summary>
-  public int Size => _pool.Count;
+  public int Size => _count;
 
   /// <summary>
   ///   The maximum number of <see cref="StringBuilder" /> instances in the pool.
@@ -63,14 +65,16 @@ public class StringBuilderPool
   ///   Gets a <see cref="StringBuilder" /> object from the pool.
   /// </summary>
   /// <returns>A <see cref="StringBuilder" /> object.</returns>
+  [MethodImpl( MethodImplOptions.AggressiveInlining )]
   public StringBuilder Get()
   {
-    if( _pool.TryTake( out var builder ) )
+    if( _pool.TryDequeue( out var builder ) )
     {
+      Interlocked.Decrement( ref _count );
       return builder;
     }
 
-    return new StringBuilder( _initialBuilderCapacity );
+    return CreateBuilder();
   }
 
   /// <summary>
@@ -82,6 +86,7 @@ public class StringBuilderPool
   ///   If the pool is full, the builder instance will not be added to the pool and will be made available for
   ///   collection.
   /// </remarks>
+  [MethodImpl( MethodImplOptions.AggressiveInlining )]
   public void Return(
     StringBuilder builder )
   {
@@ -92,10 +97,47 @@ public class StringBuilderPool
 
     builder.Clear();
 
-    if( _pool.Count < MaxPoolSize )
+    if( !TryIncrementCount() )
     {
-      _pool.Add( builder );
+      return;
     }
+
+    _pool.Enqueue( builder );
+  }
+
+  #endregion
+
+  #region Implementation
+
+  [MethodImpl( MethodImplOptions.NoInlining )]
+  private StringBuilder CreateBuilder()
+  {
+    return new StringBuilder( _initialBuilderCapacity );
+  }
+
+  /// <summary>
+  ///   Atomically increments the count if below <see cref="MaxPoolSize" />.
+  /// </summary>
+  /// <returns><c>true</c> if the count was incremented; otherwise, <c>false</c>.</returns>
+  [MethodImpl( MethodImplOptions.AggressiveInlining )]
+  private bool TryIncrementCount()
+  {
+    int currentCount;
+    int newCount;
+
+    do
+    {
+      currentCount = _count;
+
+      if( currentCount >= MaxPoolSize )
+      {
+        return false;
+      }
+
+      newCount = currentCount + 1;
+    } while( Interlocked.CompareExchange( ref _count, newCount, currentCount ) != currentCount );
+
+    return true;
   }
 
   #endregion
