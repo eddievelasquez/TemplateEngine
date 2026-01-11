@@ -29,6 +29,7 @@
  - [Advanced Usage](#advanced-usage)
  - [Benchmarks](#benchmarks)
  - [Migrating from version 2.x to 3.0](#migrating-from-2x-to-30)
+ - [Migrating from version 3.x to 4.0](#migrating-from-3x-to-40)
  - [License](#license)
 
 ## Overview
@@ -420,8 +421,7 @@ public static class MacroProcessor
 
 | Method | Return Type | Description |
 |--------|-------------|-------------|
-| `ProcessMacros(this Template template, TextWriter writer, MacroValues macroValues)` | `void` | Streams expanded output to a `TextWriter`. Missing macro values produce empty strings. Exceptions thrown by generators are caught and their messages are emitted. |
-| `ProcessMacros(this Template template, StringBuilder builder, MacroValues macroValues)` | `void` | Appends expanded output into a `StringBuilder`. |
+| `ProcessMacros(this Template template, StringBuilder builder, MacroValues macroValues)` | `void` | Appends expanded output into a `StringBuilder`. Missing macro values produce empty strings. Exceptions thrown by generators are caught and their messages are emitted. |
 | `ProcessMacros(this Template template, MacroValues macroValues)` | `string` | Expands the template and returns the resulting string using an internally pooled `StringBuilder`. |
 | `ProcessMacros(this Template template, StringBuilder builder, params ReadOnlySpan<string?> values)` | `void` | Higher-performance, positional, static values variant; span length must be at least `MacroTable.Count`. Standard macros are resolved automatically. |
 | `ProcessMacros(this Template template, StringBuilder builder, params string?[] values)` | `void` | Convenience overload for arrays. |
@@ -788,7 +788,7 @@ is even more dramatic when using a pooled `StringBuilder`.
 
 ![Results](BenchmarkResults.png)
 
-## Migrating from2.x to3.0
+## Migrating from 2.x to 3.0
 
 |2.x Concept / API |3.0 Replacement | Notes |
 |-------------------|-----------------|-------|
@@ -802,6 +802,35 @@ is even more dramatic when using a pooled `StringBuilder`.
 | `processor.GetMacroValue("Name")` | `values.GetValue("Name")` | Value access moved. |
 | (No includes feature) | `IncludesCollection` | New compile-time expansion. |
 | (N/A) | Positional values overloads | For static-only high-throughput scenarios. |
+
+## Migrating from 3.x to 4.0
+
+### Breaking Changes
+
+#### TextWriter Overloads Removed
+
+The `TextWriter` overload has been removed from `MacroProcessor`:
+- **Removed**: `ProcessMacros(this Template template, TextWriter writer, MacroValues macroValues)`
+
+**Recommended Migration**:
+Use the `StringBuilder` overload instead:
+
+```csharp
+// Before (3.x)
+using var writer = new StringWriter();
+template.ProcessMacros(writer, values);
+var result = writer.ToString();
+
+// After (4.0)
+var builder = new StringBuilder();
+template.ProcessMacros(builder, values);
+var result = builder.ToString();
+
+// Or use the convenience overload that returns a string directly
+var result = template.ProcessMacros(values);
+```
+
+The `StringBuilder` overloads provide better performance and lower allocations. For scenarios where you need to write directly to a stream or file, write to a `StringBuilder` first and then output the result.
 
 ## License
 This project is licensed under the MIT License. See `LICENSE` for details.

@@ -144,98 +144,6 @@ public class MacroProcessorTests
   }
 
   [Fact]
-  public void ProcessMacros_WithStringWriter_ShouldProcessConstantOnlyTemplate()
-  {
-    var values = CreateStaticMacroValues();
-    var template = TemplateCompiler.Compile( "Just text.", values.MacroTable );
-    var writer = new StringWriter();
-    template.ProcessMacros( writer, values );
-    writer.ToString().Should().Be( "Just text." );
-  }
-
-  [Fact]
-  public void ProcessMacros_WithStringWriter_ShouldProcessDelimiterOnlyTemplate()
-  {
-    var values = CreateStaticMacroValues();
-    var template = TemplateCompiler.Compile( "$$", values.MacroTable );
-    var writer = new StringWriter();
-    template.ProcessMacros( writer, values );
-    writer.ToString().Should().Be( "$" );
-  }
-
-  [Fact]
-  public void ProcessMacros_WithStringWriter_ShouldProcessUnclosedMacroAsConstant()
-  {
-    var values = CreateStaticMacroValues();
-    var template = TemplateCompiler.Compile( "$macro", values.MacroTable );
-    var writer = new StringWriter();
-    template.ProcessMacros( writer, values );
-    writer.ToString().Should().Be( "$macro" );
-  }
-
-  [Fact]
-  public void ProcessMacros_WithStringWriter_ShouldReplaceEscapedDelimiters()
-  {
-    var values = CreateStaticMacroValues();
-    var template = TemplateCompiler.Compile( "Give me the $$!", values.MacroTable );
-    var writer = new StringWriter();
-    template.ProcessMacros( writer, values );
-    writer.ToString().Should().Be( "Give me the $!" );
-  }
-
-  [Fact]
-  public void ProcessMacros_WithStringWriter_ShouldReplaceMacrosWithDynamicValues()
-  {
-    var timestamp = _timeProvider.GetLocalNow();
-
-    var values = CreateDynamicMacroValues( ( "now", _ => timestamp.ToString() ) );
-    var template = TemplateCompiler.Compile( "Timestamp: $now$", values.MacroTable );
-    var writer = new StringWriter();
-    template.ProcessMacros( writer, values );
-    writer.ToString().Should().Be( $"Timestamp: {timestamp}" );
-  }
-
-  [Fact]
-  public void ProcessMacros_WithStringWriter_ShouldReplaceMacrosWithDynamicValuesAndArgument()
-  {
-    var values = CreateDynamicMacroValues( ( "now", arg => _timeProvider.GetLocalNow().ToString( arg.ToString() ) ) );
-    var template = TemplateCompiler.Compile( "Timestamp: $now:yyyyMMdd$", values.MacroTable );
-    var writer = new StringWriter();
-    template.ProcessMacros( writer, values );
-    writer.ToString().Should().Be( "Timestamp: 20241020" );
-  }
-
-  [Fact]
-  public void ProcessMacros_WithStringWriter_ShouldReplaceMacrosWithStaticValues()
-  {
-    var values = CreateStaticMacroValues( ( "who", "World" ) );
-    var template = TemplateCompiler.Compile( "Hello, $who$!", values.MacroTable );
-    var writer = new StringWriter();
-    template.ProcessMacros( writer, values );
-    writer.ToString().Should().Be( "Hello, World!" );
-  }
-
-  [Fact]
-  public void ProcessMacros_WithStringWriter_ShouldWriteExceptionMessageIfMacroThrows()
-  {
-    var values = CreateDynamicMacroValues( ( "fail", _ => throw new InvalidOperationException( "fail macro error" ) ) );
-    var template = TemplateCompiler.Compile( "Hello, $fail$!", values.MacroTable );
-    var writer = new StringWriter();
-    template.ProcessMacros( writer, values );
-    writer.ToString().Should().Contain( "fail macro error" );
-  }
-
-  [Fact]
-  public void ProcessMacros_WithStringWriter_ShouldWriteMacroTextIfValueIsNull()
-  {
-    var values = CreateStaticMacroValues( ( "who", null ) );
-    var template = TemplateCompiler.Compile( "Hello, $who$!", values.MacroTable );
-    var writer = new StringWriter();
-    template.ProcessMacros( writer, values );
-    writer.ToString().Should().Be( "Hello, !" );
-  }
-
-  [Fact]
   public void ProcessMacros_WithStringBuilder_ShouldThrow_WhenMacroValuesFromDifferentTable()
   {
     var table1 = new MacroTableBuilder().Declare( "A" ).Build();
@@ -246,23 +154,6 @@ public class MacroProcessorTests
 
     var builder = new StringBuilder();
     var act = () => template.ProcessMacros( builder, values );
-
-    act.Should()
-       .Throw<ArgumentException>()
-       .WithParameterName( "macroValues" )
-       .WithMessage( "*must be associated with the same MacroTable*" );
-  }
-
-  [Fact]
-  public void ProcessMacros_WithTextWriter_ShouldThrow_WhenMacroValuesFromDifferentTable()
-  {
-    var table1 = new MacroTableBuilder().Declare( "A" ).Build();
-    var table2 = new MacroTableBuilder().Declare( "A" ).Build();
-    var template = TemplateCompiler.Compile( "x$A$x", table1 );
-    var values = table2.CreateValues();
-
-    using var writer = new StringWriter();
-    var act = () => template.ProcessMacros( writer, values );
 
     act.Should()
        .Throw<ArgumentException>()
@@ -384,31 +275,6 @@ public class MacroProcessorTests
 
     result.Should().NotBeNullOrEmpty();
     Guid.TryParse( result, out _ ).Should().BeTrue();
-  }
-
-  [Fact]
-  public void ProcessMacros_WithTextWriter_ShouldHandleEmptyTemplate()
-  {
-    var table = new MacroTableBuilder().Build();
-    var values = table.CreateValues();
-    var template = TemplateCompiler.Compile( "x", table );
-
-    using var writer = new StringWriter();
-    template.ProcessMacros( writer, values );
-
-    writer.ToString().Should().Be( "x" );
-  }
-
-  [Fact]
-  public void ProcessMacros_WithTextWriter_ShouldHandleMultipleMacros()
-  {
-    var values = CreateStaticMacroValues( ( "A", "1" ), ( "B", "2" ), ( "C", "3" ) );
-    var template = TemplateCompiler.Compile( "$A$-$B$-$C$", values.MacroTable );
-
-    using var writer = new StringWriter();
-    template.ProcessMacros( writer, values );
-
-    writer.ToString().Should().Be( "1-2-3" );
   }
 
   [Fact]
