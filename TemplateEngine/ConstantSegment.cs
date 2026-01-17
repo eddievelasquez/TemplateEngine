@@ -7,17 +7,17 @@ namespace Intercode.Toolbox.TemplateEngine;
 using System.Runtime.InteropServices;
 using System.Text;
 
-// Size: 8 bytes
+// Size: 8 bytes (naturally aligned)
 
 /// <summary>
 ///   Represents a constant (literal) text segment within a template, storing the position and length
 ///   of the text in the original template source.
 /// </summary>
 /// <remarks>
-///   This struct uses sequential layout with pack=1 to minimize memory overhead. It occupies exactly 8 bytes
-///   and provides efficient access to template text regions without copying the underlying string data.
+///   This struct uses sequential layout with natural alignment. It occupies exactly 8 bytes with both
+///   <see cref="int" /> fields aligned to 4-byte boundaries for optimal CPU memory access patterns.
 /// </remarks>
-[StructLayout( LayoutKind.Sequential, Pack = 1 )]
+[StructLayout( LayoutKind.Sequential )]
 internal readonly struct ConstantSegment
 {
   #region Fields

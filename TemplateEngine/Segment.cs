@@ -30,10 +30,11 @@ internal struct IfElseSegment
 /// </summary>
 /// <remarks>
 ///   This struct uses explicit layout to create a discriminated union, storing either a <see cref="ConstantSegment" />
-///   or a <see cref="MacroSegment" /> based on the <see cref="Kind" /> discriminator. The struct is optimized to be
-///   exactly 16 bytes in size for efficient memory usage and cache performance.
+///   or a <see cref="MacroSegment" /> based on the <see cref="Kind" /> discriminator. The struct occupies 20 bytes
+///   with all fields aligned to their natural boundaries (4-byte alignment for the union offset) for optimal CPU
+///   memory access patterns.
 /// </remarks>
-[StructLayout( LayoutKind.Explicit, Size = 16 )]
+[StructLayout( LayoutKind.Explicit, Size = 20 )]
 [DebuggerDisplay( "{GetDebuggerString()}" )]
 [SuppressMessage( "ReSharper", "ConvertToAutoPropertyWhenPossible" )]
 [SuppressMessage( "ReSharper", "ConvertToAutoProperty" )]
@@ -53,14 +54,10 @@ internal readonly struct Segment
   [FieldOffset( 0 )]
   private readonly SegmentKind _kind;
 
-  // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
-  [FieldOffset( 1 )]
-  private readonly byte _reserved;
-
-  [FieldOffset( 2 )]
+  [FieldOffset( 4 )]
   private readonly ConstantSegment _constant;
 
-  [FieldOffset( 2 )]
+  [FieldOffset( 4 )]
   private readonly MacroSegment _macro;
 
   #endregion

@@ -6,9 +6,30 @@
 
 namespace Intercode.Toolbox.TemplateEngine.Tests;
 
+using ObjectLayoutInspector;
+using Xunit.Abstractions;
+
 public class SegmentTest
 {
+  private readonly ITestOutputHelper _outputHelper;
+
+  public SegmentTest(
+    ITestOutputHelper outputHelper )
+  {
+    _outputHelper = outputHelper;
+  }
+
   #region Tests
+
+  [Fact]
+  public void Segment_ShouldBeExactly20Bytes()
+  {
+    var layout = TypeLayout.GetLayout<Segment>();
+    var s = layout.ToString( true );
+    _outputHelper.WriteLine( s );
+
+    layout.FullSize.Should().Be( 20 );
+  }
 
   [Fact]
   public void Segment_ConstantProperty_ShouldBeAccessible_WhenKindIsConstant()

@@ -7,26 +7,22 @@ namespace Intercode.Toolbox.TemplateEngine;
 using System.Runtime.InteropServices;
 using System.Text;
 
-// Size: 14 bytes
+// Size: 16 bytes (naturally aligned)
 
 /// <summary>
 ///   Represents a macro segment within a template, storing the position and length of the macro name
 ///   and its optional argument, along with the slot index for the macro resolver.
 /// </summary>
 /// <remarks>
-///   This struct uses sequential layout with pack=1 to minimize memory overhead. It occupies exactly 14 bytes
-///   and supports both user-defined and standard macros. The slot index references the resolver that will
-///   handle the macro expansion during template processing.
+///   This struct uses sequential layout with natural alignment for optimal CPU memory access patterns.
+///   It occupies exactly 16 bytes with all fields aligned to their natural boundaries (4-byte alignment
+///   for <see cref="int" /> fields, 2-byte alignment for <see cref="ushort" /> fields). The slot index
+///   references the resolver that will handle the macro expansion during template processing.
 /// </remarks>
-[StructLayout( LayoutKind.Sequential, Pack = 1 )]
+[StructLayout( LayoutKind.Sequential )]
 internal readonly struct MacroSegment
 {
   #region Fields
-
-  /// <summary>
-  ///   The slot index where the macro resolver is stored. Valid range is [0, 65535].
-  /// </summary>
-  public readonly ushort Slot;
 
   /// <summary>
   ///   The zero-based starting index of the macro name in the template source string.
@@ -37,6 +33,11 @@ internal readonly struct MacroSegment
   ///   The zero-based starting index of the macro argument in the template source string, or -1 if no argument is present.
   /// </summary>
   public readonly int ArgumentStart;
+
+  /// <summary>
+  ///   The slot index where the macro resolver is stored. Valid range is [0, 65535].
+  /// </summary>
+  public readonly ushort Slot;
 
   /// <summary>
   ///   The length of the macro name in characters. Valid range is [1, 65535].
@@ -94,9 +95,9 @@ internal readonly struct MacroSegment
       throw new ArgumentOutOfRangeException( nameof( argumentLength ) );
     }
 
-    Slot = ( ushort ) slot;
     NameStart = nameStart;
     ArgumentStart = argumentStart;
+    Slot = ( ushort ) slot;
     NameLength = ( ushort ) nameLength;
     ArgumentLength = ( ushort ) argumentLength;
   }
