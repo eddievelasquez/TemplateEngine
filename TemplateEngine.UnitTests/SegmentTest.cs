@@ -57,224 +57,6 @@ public class SegmentTest
     span.ToString().Should().Be( "Hello World" );
   }
 
-  [Theory]
-  [InlineData( 0, 0 )]
-  [InlineData( int.MaxValue, int.MaxValue )]
-  [InlineData( 42, 100 )]
-  public void Segment_CreateConstant_ShouldHandleVariousValues(
-    int start,
-    int length )
-  {
-    var segment = Segment.CreateConstant( start, length );
-
-    segment.Kind.Should().Be( SegmentKind.Constant );
-    segment.Constant.TextStart.Should().Be( start );
-    segment.Constant.TextLength.Should().Be( length );
-  }
-
-  [Fact]
-  public void Segment_CreateConstant_ShouldInitializeConstantSegment()
-  {
-    var segment = Segment.CreateConstant( 10, 20 );
-
-    segment.Constant.TextStart.Should().Be( 10 );
-    segment.Constant.TextLength.Should().Be( 20 );
-  }
-
-  [Fact]
-  public void Segment_CreateConstant_ShouldSetKindToConstant()
-  {
-    var segment = Segment.CreateConstant( 10, 20 );
-
-    segment.Kind.Should().Be( SegmentKind.Constant );
-  }
-
-  [Theory]
-  [InlineData( 0, -1 )]
-  [InlineData( 0, -100 )]
-  [InlineData( 0, int.MinValue )]
-  public void Segment_CreateConstant_ShouldThrow_WhenTextLengthIsNegative(
-    int start,
-    int length )
-  {
-    var act = () => Segment.CreateConstant( start, length );
-
-    act.Should()
-       .Throw<ArgumentOutOfRangeException>()
-       .WithParameterName( "textLength" );
-  }
-
-  [Theory]
-  [InlineData( -1, 0 )]
-  [InlineData( -100, 0 )]
-  [InlineData( int.MinValue, 0 )]
-  public void Segment_CreateConstant_ShouldThrow_WhenTextStartIsNegative(
-    int start,
-    int length )
-  {
-    var act = () => Segment.CreateConstant( start, length );
-
-    act.Should()
-       .Throw<ArgumentOutOfRangeException>()
-       .WithParameterName( "textStart" );
-  }
-
-  [Theory]
-  [InlineData( ushort.MaxValue, int.MaxValue, ushort.MaxValue, int.MaxValue, ushort.MaxValue )]
-  [InlineData( 10, 50, 15, 100, 25 )]
-  public void Segment_CreateStandardMacro_ShouldHandleVariousValues(
-    ushort slot,
-    int nameStart,
-    ushort nameLength,
-    int argStart,
-    ushort argLength )
-  {
-    var segment = Segment.CreateMacro( -slot, nameStart, nameLength, argStart, argLength );
-
-    segment.Kind.Should().Be( SegmentKind.StandardMacro );
-    segment.Macro.Slot.Should().Be( slot );
-    segment.Macro.NameStart.Should().Be( nameStart );
-    segment.Macro.NameLength.Should().Be( nameLength );
-    segment.Macro.ArgumentStart.Should().Be( argStart );
-    segment.Macro.ArgumentLength.Should().Be( argLength );
-  }
-
-  [Fact]
-  public void Segment_CreateStandardMacro_ShouldInitializeMacroSegment()
-  {
-    var segment = Segment.CreateStandardMacro( 1, 10, 5, 20, 8 );
-
-    segment.Macro.Slot.Should().Be( 1 );
-    segment.Macro.NameStart.Should().Be( 10 );
-    segment.Macro.NameLength.Should().Be( 5 );
-    segment.Macro.ArgumentStart.Should().Be( 20 );
-    segment.Macro.ArgumentLength.Should().Be( 8 );
-  }
-
-  [Fact]
-  public void Segment_CreateStandardMacro_ShouldSetKindToStandardMacro()
-  {
-    var segment = Segment.CreateStandardMacro( 1, 10, 5, 20, 8 );
-
-    segment.Kind.Should().Be( SegmentKind.StandardMacro );
-  }
-
-  [Theory]
-  [InlineData( -2 )]
-  [InlineData( -100 )]
-  [InlineData( int.MinValue )]
-  public void Segment_CreateStandardMacro_ShouldThrow_WhenArgumentStartIsLessThanMinus1(
-    int argumentStart )
-  {
-    var act = () => Segment.CreateStandardMacro( 1, 10, 5, argumentStart, 0 );
-
-    act.Should()
-       .Throw<ArgumentOutOfRangeException>()
-       .WithParameterName( "argumentStart" );
-  }
-
-  [Fact]
-  public void Segment_CreateStandardMacro_ShouldThrow_WhenNameLengthIsZero()
-  {
-    var act = () => Segment.CreateStandardMacro( 1, 10, 0, 0, 0 );
-
-    act.Should()
-       .Throw<ArgumentOutOfRangeException>()
-       .WithParameterName( "nameLength" );
-  }
-
-  [Theory]
-  [InlineData( -1 )]
-  [InlineData( -100 )]
-  [InlineData( int.MinValue )]
-  public void Segment_CreateStandardMacro_ShouldThrow_WhenNameStartIsNegative(
-    int nameStart )
-  {
-    var act = () => Segment.CreateStandardMacro( 1, nameStart, 5, 0, 0 );
-
-    act.Should()
-       .Throw<ArgumentOutOfRangeException>()
-       .WithParameterName( "nameStart" );
-  }
-
-  [Theory]
-  [InlineData( ushort.MaxValue, int.MaxValue, ushort.MaxValue, int.MaxValue, ushort.MaxValue )]
-  [InlineData( 5, 100, 10, 200, 20 )]
-  public void Segment_CreateUserMacro_ShouldHandleVariousValues(
-    ushort slot,
-    int nameStart,
-    ushort nameLength,
-    int argStart,
-    ushort argLength )
-  {
-    var segment = Segment.CreateUserMacro( slot, nameStart, nameLength, argStart, argLength );
-
-    segment.Kind.Should().Be( SegmentKind.UserMacro );
-    segment.Macro.Slot.Should().Be( slot );
-    segment.Macro.NameStart.Should().Be( nameStart );
-    segment.Macro.NameLength.Should().Be( nameLength );
-    segment.Macro.ArgumentStart.Should().Be( argStart );
-    segment.Macro.ArgumentLength.Should().Be( argLength );
-  }
-
-  [Fact]
-  public void Segment_CreateUserMacro_ShouldInitializeMacroSegment()
-  {
-    var segment = Segment.CreateUserMacro( 1, 10, 5, 20, 8 );
-
-    segment.Macro.Slot.Should().Be( 1 );
-    segment.Macro.NameStart.Should().Be( 10 );
-    segment.Macro.NameLength.Should().Be( 5 );
-    segment.Macro.ArgumentStart.Should().Be( 20 );
-    segment.Macro.ArgumentLength.Should().Be( 8 );
-  }
-
-  [Fact]
-  public void Segment_CreateUserMacro_ShouldSetKindToUserMacro()
-  {
-    var segment = Segment.CreateUserMacro( 1, 10, 5, 20, 8 );
-
-    segment.Kind.Should().Be( SegmentKind.UserMacro );
-  }
-
-  [Theory]
-  [InlineData( -2 )]
-  [InlineData( -100 )]
-  [InlineData( int.MinValue )]
-  public void Segment_CreateUserMacro_ShouldThrow_WhenArgumentStartIsLessThanMinus1(
-    int argumentStart )
-  {
-    var act = () => Segment.CreateUserMacro( 1, 10, 5, argumentStart, 0 );
-
-    act.Should()
-       .Throw<ArgumentOutOfRangeException>()
-       .WithParameterName( "argumentStart" );
-  }
-
-  [Fact]
-  public void Segment_CreateUserMacro_ShouldThrow_WhenNameLengthIsZero()
-  {
-    var act = () => Segment.CreateUserMacro( 1, 10, 0, 0, 0 );
-
-    act.Should()
-       .Throw<ArgumentOutOfRangeException>()
-       .WithParameterName( "nameLength" );
-  }
-
-  [Theory]
-  [InlineData( -1 )]
-  [InlineData( -100 )]
-  [InlineData( int.MinValue )]
-  public void Segment_CreateUserMacro_ShouldThrow_WhenNameStartIsNegative(
-    int nameStart )
-  {
-    var act = () => Segment.CreateUserMacro( 1, nameStart, 5, 0, 0 );
-
-    act.Should()
-       .Throw<ArgumentOutOfRangeException>()
-       .WithParameterName( "nameStart" );
-  }
-
   [Fact]
   public void Segment_GetDebuggerString_ShouldReturnConstantString_WhenKindIsConstant()
   {
@@ -310,30 +92,6 @@ public class SegmentTest
           .Be(
             "UserMacro { Slot: 1, NameStart: 10, NameLength: 5, ArgumentStart: 20, ArgumentLength: 8 }"
           );
-  }
-
-  [Fact]
-  public void Segment_KindProperty_ShouldCorrectlyIndicateSegmentType_Constant()
-  {
-    var segment = Segment.CreateConstant( 0, 1 );
-
-    segment.Kind.Should().Be( SegmentKind.Constant );
-  }
-
-  [Fact]
-  public void Segment_KindProperty_ShouldCorrectlyIndicateSegmentType_StandardMacro()
-  {
-    var segment = Segment.CreateStandardMacro( 1, 0, 1, 0, 0 );
-
-    segment.Kind.Should().Be( SegmentKind.StandardMacro );
-  }
-
-  [Fact]
-  public void Segment_KindProperty_ShouldCorrectlyIndicateSegmentType_UserMacro()
-  {
-    var segment = Segment.CreateUserMacro( 1, 0, 1, 0, 0 );
-
-    segment.Kind.Should().Be( SegmentKind.UserMacro );
   }
 
   [Fact]
@@ -501,6 +259,19 @@ public class SegmentTest
 
     var argSpan = segment.Macro.GetArgumentSpan( template );
     argSpan.ToString().Should().Be( "yyyy-MM-dd" );
+  }
+
+  [Fact]
+  public void Segment_CreateMacro_ShouldCreateUserMacro_WhenSlotIsZero()
+  {
+    var segment = Segment.CreateMacro( 0, 10, 5, 20, 8 );
+
+    segment.Kind.Should().Be( SegmentKind.UserMacro );
+    segment.Macro.Slot.Should().Be( 0 );
+    segment.Macro.NameStart.Should().Be( 10 );
+    segment.Macro.NameLength.Should().Be( 5 );
+    segment.Macro.ArgumentStart.Should().Be( 20 );
+    segment.Macro.ArgumentLength.Should().Be( 8 );
   }
 
   #endregion

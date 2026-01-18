@@ -15,6 +15,38 @@ public class MacroSegmentTest
   [Theory]
   [InlineData( 0, 0, 1, 0, 0 )]
   [InlineData( ushort.MaxValue, int.MaxValue, ushort.MaxValue, int.MaxValue, ushort.MaxValue )]
+  public void CreateStandardMacro_ShouldHandleEdgeCaseValues(
+    ushort slot,
+    int nameStart,
+    ushort nameLength,
+    int argStart,
+    ushort argLength )
+  {
+    var segment = Segment.CreateStandardMacro( slot, nameStart, nameLength, argStart, argLength )
+                         .Macro;
+
+    segment.Slot.Should().Be( slot );
+    segment.NameStart.Should().Be( nameStart );
+    segment.NameLength.Should().Be( nameLength );
+    segment.ArgumentStart.Should().Be( argStart );
+    segment.ArgumentLength.Should().Be( argLength );
+  }
+
+  [Fact]
+  public void CreateStandardMacro_ShouldInitializeAllFields()
+  {
+    var segment = Segment.CreateStandardMacro( 5, 10, 15, 20, 25 ).Macro;
+
+    segment.Slot.Should().Be( 5 );
+    segment.NameStart.Should().Be( 10 );
+    segment.NameLength.Should().Be( 15 );
+    segment.ArgumentStart.Should().Be( 20 );
+    segment.ArgumentLength.Should().Be( 25 );
+  }
+
+  [Theory]
+  [InlineData( 0, 0, 1, 0, 0 )]
+  [InlineData( ushort.MaxValue, int.MaxValue, ushort.MaxValue, int.MaxValue, ushort.MaxValue )]
   public void CreateUserMacro_ShouldHandleEdgeCaseValues(
     ushort slot,
     int nameStart,
@@ -72,6 +104,17 @@ public class MacroSegmentTest
     var result = segment.GetArgumentSpan( template );
 
     result.ToString().Should().Be( "X" );
+  }
+
+  [Fact]
+  public void GetArgumentSpan_ShouldReturnEmptySpan_WhenArgumentStartIsMinus1()
+  {
+    var template = CreateTemplate( "$macro$" );
+    var segment = Segment.CreateUserMacro( 1, 1, 5, -1, 0 ).Macro;
+
+    var result = segment.GetArgumentSpan( template );
+
+    result.IsEmpty.Should().BeTrue();
   }
 
   [Fact]
