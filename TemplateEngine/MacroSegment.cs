@@ -25,24 +25,14 @@ internal readonly struct MacroSegment
   #region Fields
 
   /// <summary>
-  ///   The zero-based starting index of the macro name in the template source string.
+  ///   The slot index where the macro resolver is stored.
   /// </summary>
-  public readonly int NameStart;
+  public readonly int Slot;
 
   /// <summary>
   ///   The zero-based starting index of the macro argument in the template source string, or -1 if no argument is present.
   /// </summary>
   public readonly int ArgumentStart;
-
-  /// <summary>
-  ///   The slot index where the macro resolver is stored. Valid range is [0, 65535].
-  /// </summary>
-  public readonly ushort Slot;
-
-  /// <summary>
-  ///   The length of the macro name in characters. Valid range is [1, 65535].
-  /// </summary>
-  public readonly ushort NameLength;
 
   /// <summary>
   ///   The length of the macro argument in characters. Valid range is [0, 65535]. Zero indicates no argument.
@@ -53,8 +43,6 @@ internal readonly struct MacroSegment
   ///   Initializes a new instance of the <see cref="MacroSegment" /> struct.
   /// </summary>
   /// <param name="slot">The slot index where the macro resolver is stored. Must be in the range [0, 65535].</param>
-  /// <param name="nameStart">The zero-based starting index of the macro name in the template source. Must be non-negative.</param>
-  /// <param name="nameLength">The length of the macro name in characters. Must be in the range [1, 65535].</param>
   /// <param name="argumentStart">
   ///   The zero-based starting index of the macro argument in the template source, or -1 if no
   ///   argument is present. Must be greater than or equal to -1.
@@ -65,26 +53,9 @@ internal readonly struct MacroSegment
   /// </exception>
   internal MacroSegment(
     int slot,
-    int nameStart,
-    int nameLength,
     int argumentStart,
     int argumentLength )
   {
-    if( slot is < 0 or > ushort.MaxValue )
-    {
-      throw new ArgumentOutOfRangeException( nameof( slot ) );
-    }
-
-    if( nameStart < 0 )
-    {
-      throw new ArgumentOutOfRangeException( nameof( nameStart ) );
-    }
-
-    if( nameLength is 0 or > ushort.MaxValue )
-    {
-      throw new ArgumentOutOfRangeException( nameof( nameLength ) );
-    }
-
     if( argumentStart < -1 )
     {
       throw new ArgumentOutOfRangeException( nameof( argumentStart ) );
@@ -95,42 +66,24 @@ internal readonly struct MacroSegment
       throw new ArgumentOutOfRangeException( nameof( argumentLength ) );
     }
 
-    NameStart = nameStart;
+    Slot = slot;
     ArgumentStart = argumentStart;
-    Slot = ( ushort ) slot;
-    NameLength = ( ushort ) nameLength;
     ArgumentLength = ( ushort ) argumentLength;
   }
 
   #endregion
 
+  /// <summary>
+  ///   Indicates whether this segment represents a user-defined macro.
+  /// </summary>
+  public bool IsUserMacro => Slot >= 0;
+
+  /// <summary>
+  ///   Indicates whether this segment represents a standard macro.
+  /// </summary>
+  public bool IsStandardMacro => Slot < 0;
+
   #region Public Methods
-
-  /// <summary>
-  ///   Retrieves the macro name as a string by extracting the substring from the template source.
-  /// </summary>
-  /// <param name="template">The template containing the source text.</param>
-  /// <returns>The macro name as a <see cref="string" />.</returns>
-  public string GetName(
-    Template template )
-  {
-    return template.Text.Substring( NameStart, NameLength );
-  }
-
-  /// <summary>
-  ///   Retrieves the macro name as a read-only character span without allocating a new string.
-  /// </summary>
-  /// <param name="template">The template containing the source text.</param>
-  /// <returns>A <see cref="ReadOnlySpan{T}" /> of characters representing the macro name.</returns>
-  /// <remarks>
-  ///   This method provides zero-allocation access to the macro name and should be preferred
-  ///   over <see cref="GetName" /> in performance-critical scenarios.
-  /// </remarks>
-  public ReadOnlySpan<char> GetNameSpan(
-    Template template )
-  {
-    return template.Text.AsSpan( NameStart, NameLength );
-  }
 
   /// <summary>
   ///   Retrieves the macro argument as a read-only character span without allocating a new string.
@@ -166,18 +119,10 @@ internal readonly struct MacroSegment
     builder.Append( "Macro { " );
     builder.Append( "Slot: " );
     builder.Append( Slot );
-    builder.Append( ", NameStart: " );
-    builder.Append( NameStart );
-    builder.Append( ", NameLength: " );
-    builder.Append( NameLength );
-
-    if( NameLength > 0 )
-    {
-      builder.Append( ", ArgumentStart: " );
-      builder.Append( ArgumentStart );
-      builder.Append( ", ArgumentLength: " );
-      builder.Append( ArgumentLength );
-    }
+    builder.Append( ", ArgumentStart: " );
+    builder.Append( ArgumentStart );
+    builder.Append( ", ArgumentLength: " );
+    builder.Append( ArgumentLength );
 
     builder.Append( " }" );
   }

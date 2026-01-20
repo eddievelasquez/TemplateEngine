@@ -1,6 +1,6 @@
 // Module Name: SegmentAssertions.cs
 // Author:      Eduardo Velasquez
-// Copyright (c) 2025, Intercode Consulting, Inc.
+// Copyright (c) 2026, Intercode Consulting, Inc.
 
 namespace Intercode.Toolbox.TemplateEngine.Tests.FluentAssertions;
 
@@ -49,7 +49,9 @@ internal sealed class SegmentAssertions: ObjectAssertions<Segment, SegmentAssert
            .FailWith(
              "Expected {context:segment} to be a constant segment{reason}, but it was a {0} (name: {1}).",
              Subject.Kind,
-             Subject.Kind != SegmentKind.Constant ? Subject.Macro.GetName( Template ) : "N/A"
+             Subject.Kind != SegmentKind.Constant
+               ? Template.MacroTable.GetMacroName( Subject )
+               : "N/A"
            );
 
     if( text is not null )
@@ -81,9 +83,7 @@ internal sealed class SegmentAssertions: ObjectAssertions<Segment, SegmentAssert
     using var _ = new AssertionScope();
 
     Execute.Assertion
-           .ForCondition(
-             Subject.Kind == SegmentKind.UserMacro || Subject.Kind == SegmentKind.StandardMacro
-           )
+           .ForCondition( Subject.Kind == SegmentKind.Macro )
            .BecauseOf( because, becauseArgs )
            .FailWith(
              "Expected {context:segment} to be a macro segment{reason}, but it was a constant (text: {0}).",
@@ -92,7 +92,7 @@ internal sealed class SegmentAssertions: ObjectAssertions<Segment, SegmentAssert
 
     if( name is not null )
     {
-      var actualName = Subject.Macro.GetName( Template );
+      var actualName = Template.MacroTable.GetMacroName( Subject );
 
       Execute.Assertion
              .ForCondition( actualName == name )
@@ -131,7 +131,7 @@ internal sealed class SegmentAssertions: ObjectAssertions<Segment, SegmentAssert
   {
     var actualText = Subject.Kind == SegmentKind.Constant
       ? Subject.Constant.GetText( Template )
-      : Subject.Macro.GetName( Template );
+      : Template.MacroTable.GetMacroName( Subject );
 
     Execute.Assertion
            .ForCondition( actualText == expected )
@@ -181,8 +181,7 @@ internal sealed class SegmentAssertions: ObjectAssertions<Segment, SegmentAssert
     var actualSlot = Subject.Kind switch
     {
       SegmentKind.Constant => -1,
-      SegmentKind.StandardMacro => -Subject.Macro.Slot,
-      SegmentKind.UserMacro => Subject.Macro.Slot,
+      SegmentKind.Macro => Subject.Macro.Slot,
       _ => throw new InvalidOperationException( $"Unknown segment kind: {Subject.Kind}" )
     };
 

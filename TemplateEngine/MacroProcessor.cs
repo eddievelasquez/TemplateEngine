@@ -62,15 +62,15 @@ public static class MacroProcessor
         continue;
       }
 
-      // Handle macro segments (UserMacro or StandardMacro)
+      // Handle macro segments (Macro or StandardMacro)
       string value;
 
       try
       {
         var macro = segment.Macro;
-        var slot = segment.Kind == SegmentKind.StandardMacro ? -macro.Slot : macro.Slot;
 
-        value = macroValues.GetValue( slot, macro.GetArgumentSpan( template ) ) ?? string.Empty;
+        value = macroValues.GetValue( macro.Slot, macro.GetArgumentSpan( template ) ) ??
+                string.Empty;
       }
       catch( Exception exception )
       {
@@ -129,21 +129,11 @@ public static class MacroProcessor
         continue;
       }
 
-      // Handle macro segments (UserMacro or StandardMacro)
-      var macro = segment.Macro;
-      var slot = segment.Kind == SegmentKind.StandardMacro ? -macro.Slot : macro.Slot;
-
-      string? value;
+      // Handle macro segments
+      var slot = segment.Macro.Slot;
 
       // Negative slots are standard macros.
-      if( slot < 0 )
-      {
-        value = StandardMacros.GetValue( slot );
-      }
-      else
-      {
-        value = values[slot - 1];
-      }
+      var value = slot < 0 ? StandardMacros.GetValue( slot ) : values[slot - 1];
 
       if( value is not null )
       {

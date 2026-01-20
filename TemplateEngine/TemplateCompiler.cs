@@ -359,7 +359,7 @@ public static class TemplateCompiler
         throw new InvalidOperationException( $"Undefined macro: '{name.ToString()}'" );
       }
 
-      segments.Add( Segment.CreateMacro( slot, start, length, argStart, argLength ) );
+      segments.Add( Segment.CreateMacro( slot, argStart, argLength ) );
     }
   }
 

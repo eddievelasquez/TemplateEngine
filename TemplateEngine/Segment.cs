@@ -1,6 +1,6 @@
 // Module Name: Segment.cs
 // Author:      Eduardo Velasquez
-// Copyright (c) 2025, Intercode Consulting, Inc.
+// Copyright (c) 2026, Intercode Consulting, Inc.
 
 namespace Intercode.Toolbox.TemplateEngine;
 
@@ -8,22 +8,6 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Text;
-
-#if false
-[StructLayout( LayoutKind.Sequential,Pack = 1 )]
-internal struct IfElseSegment
-{
-  #region Fields
-
-  public int PredicateNameStart;
-  public byte PredicateNameLength;
-  public byte ArgumentLength;
-  public int IfBlockLength;
-  public int ElseBlockLength;
-
-  #endregion
-}
-#endif
 
 /// <summary>
 ///   Represents a parsed segment of a template, which can be either a constant text region or a macro invocation.
@@ -103,8 +87,7 @@ internal readonly struct Segment
   public ConstantSegment Constant => _constant;
 
   /// <summary>
-  ///   Gets the macro segment data. Only valid when <see cref="Kind" /> is <see cref="SegmentKind.UserMacro" />
-  ///   or <see cref="SegmentKind.StandardMacro" />.
+  ///   Gets the macro segment data. Only valid when <see cref="Kind" /> is <see cref="SegmentKind.Macro" />.
   /// </summary>
   public MacroSegment Macro => _macro;
 
@@ -135,8 +118,6 @@ internal readonly struct Segment
   ///   The slot index where the macro resolver is stored. Negative values indicate a standard macro;
   ///   non-negative values indicate a user-defined macro. Valid range is [-32768, 65535].
   /// </param>
-  /// <param name="nameStart">The zero-based starting index of the macro name in the template source.</param>
-  /// <param name="nameLength">The length of the macro name in characters. Must be in the range [1, 65535].</param>
   /// <param name="argumentStart">
   ///   The zero-based starting index of the macro argument in the template source, or -1 if no
   ///   argument is present.
@@ -156,91 +137,13 @@ internal readonly struct Segment
   /// </remarks>
   public static Segment CreateMacro(
     int slot,
-    int nameStart,
-    int nameLength,
     int argumentStart,
     int argumentLength )
   {
     return new Segment(
-      slot < 0 ? SegmentKind.StandardMacro : SegmentKind.UserMacro,
-      new MacroSegment(
-        Math.Abs( slot ),
-        nameStart,
-        nameLength,
-        argumentStart,
-        argumentLength
-      )
-    );
-  }
-
-  /// <summary>
-  ///   Creates a user-defined macro segment representing a custom macro invocation within a template.
-  /// </summary>
-  /// <param name="slot">The slot index where the macro resolver is stored. Must be in the range [0, 65535].</param>
-  /// <param name="nameStart">The zero-based starting index of the macro name in the template source.</param>
-  /// <param name="nameLength">The length of the macro name in characters. Must be in the range [1, 65535].</param>
-  /// <param name="argumentStart">
-  ///   The zero-based starting index of the macro argument in the template source, or -1 if no
-  ///   argument is present.
-  /// </param>
-  /// <param name="argumentLength">The length of the macro argument in characters. Must be in the range [0, 65535].</param>
-  /// <returns>A new <see cref="Segment" /> instance configured as a user macro segment.</returns>
-  /// <exception cref="ArgumentOutOfRangeException">
-  ///   Thrown when any parameter is outside its valid range.
-  /// </exception>
-  [Obsolete(
-    "Use CreateMacro with a non-negative slot value instead. This method will be removed in a future version."
-  )]
-  public static Segment CreateUserMacro(
-    int slot,
-    int nameStart,
-    int nameLength,
-    int argumentStart,
-    int argumentLength )
-  {
-    return new Segment(
-      SegmentKind.UserMacro,
+      SegmentKind.Macro,
       new MacroSegment(
         slot,
-        nameStart,
-        nameLength,
-        argumentStart,
-        argumentLength
-      )
-    );
-  }
-
-  /// <summary>
-  ///   Creates a standard macro segment representing a built-in macro invocation within a template.
-  /// </summary>
-  /// <param name="slot">The slot index where the standard macro handler is stored. Must be in the range [0, 65535].</param>
-  /// <param name="nameStart">The zero-based starting index of the macro name in the template source.</param>
-  /// <param name="nameLength">The length of the macro name in characters. Must be in the range [1, 65535].</param>
-  /// <param name="argumentStart">
-  ///   The zero-based starting index of the macro argument in the template source, or -1 if no
-  ///   argument is present.
-  /// </param>
-  /// <param name="argumentLength">The length of the macro argument in characters. Must be in the range [0, 65535].</param>
-  /// <returns>A new <see cref="Segment" /> instance configured as a standard macro segment.</returns>
-  /// <exception cref="ArgumentOutOfRangeException">
-  ///   Thrown when any parameter is outside its valid range.
-  /// </exception>
-  [Obsolete(
-    "Use CreateMacro with a negative slot value instead. This method will be removed in a future version."
-  )]
-  public static Segment CreateStandardMacro(
-    int slot,
-    int nameStart,
-    int nameLength,
-    int argumentStart,
-    int argumentLength )
-  {
-    return new Segment(
-      SegmentKind.StandardMacro,
-      new MacroSegment(
-        slot,
-        nameStart,
-        nameLength,
         argumentStart,
         argumentLength
       )
@@ -271,9 +174,7 @@ internal readonly struct Segment
         return builder.ToString();
       }
 
-      builder.Append( _kind == SegmentKind.StandardMacro ? "Standard" : "User" );
       Macro.GetDebuggerString( builder );
-
       return builder.ToString();
     }
     finally

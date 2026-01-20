@@ -25,9 +25,11 @@ public sealed class MacroTable
 
   #region Fields
 
-  private readonly FrozenDictionary<string, int> _macroSlots;
+  private readonly FrozenDictionary<string, int> _macroNameToSlot;
+  private readonly FrozenDictionary<int, string> _slotToMacroName;
 #if NET9_0_OR_GREATER
-  private readonly FrozenDictionary<string, int>.AlternateLookup<ReadOnlySpan<char>> _altMacroSlots;
+  private readonly FrozenDictionary<string, int>.AlternateLookup<ReadOnlySpan<char>>
+    _altMacroNameToSlot;
 #endif
 
   #endregion
@@ -42,9 +44,11 @@ public sealed class MacroTable
   internal MacroTable(
     IDictionary<string, int> macroSlots )
   {
-    _macroSlots = macroSlots.ToFrozenDictionary( StringComparer.OrdinalIgnoreCase );
+    _macroNameToSlot = macroSlots.ToFrozenDictionary( StringComparer.OrdinalIgnoreCase );
+    _slotToMacroName = macroSlots.ToFrozenDictionary( kvp => kvp.Value, kvp => kvp.Key );
+
 #if NET9_0_OR_GREATER
-    _altMacroSlots = _macroSlots.GetAlternateLookup<ReadOnlySpan<char>>();
+    _altMacroNameToSlot = _macroNameToSlot.GetAlternateLookup<ReadOnlySpan<char>>();
 #endif
   }
 
@@ -55,7 +59,7 @@ public sealed class MacroTable
   /// <summary>
   ///   Gets the number of macros in the table.
   /// </summary>
-  public int Count => _macroSlots.Count;
+  public int Count => _macroNameToSlot.Count;
 
   #endregion
 
@@ -88,7 +92,7 @@ public sealed class MacroTable
     }
 
     // First check in the declared macros; then check in standard macros.
-    if( _macroSlots.TryGetValue( macroName, out var slot ) )
+    if( _macroNameToSlot.TryGetValue( macroName, out var slot ) )
     {
       return slot;
     }
@@ -105,12 +109,71 @@ public sealed class MacroTable
     ReadOnlySpan<char> macroName )
   {
 #if NET9_0_OR_GREATER
-    return _altMacroSlots.TryGetValue( macroName, out var slot )
+    return _altMacroNameToSlot.TryGetValue( macroName, out var slot )
       ? slot
       : StandardMacros.GetSlot( macroName );
 #else
     return GetSlot( macroName.ToString() );
 #endif
+  }
+
+  /// <summary>
+  ///   Gets the macro name associated with the specified slot.
+  /// </summary>
+  /// <param name="slot">The zero-based index of the slot for which to retrieve the macro name.</param>
+  /// <returns>The name of the macro assigned to the specified slot.</returns>
+  public string GetMacroName(
+    int slot )
+  {
+    return _slotToMacroName[slot];
+  }
+
+  /// <summary>
+  ///   Retrieves the macro name associated with the specified macro segment.
+  /// </summary>
+  /// <param name="segment">The segment representing a macro. Must be of kind StandardMacro or Macro.</param>
+  /// <returns>The name of the macro corresponding to the specified segment.</returns>
+  /// <exception cref="ArgumentException">Thrown if the segment is not of kind StandardMacro or Macro.</exception>
+  internal string GetMacroName(
+    Segment segment )
+  {
+    if( segment.Kind != SegmentKind.Macro )
+    {
+      throw new ArgumentException( "Must be a macro segment", nameof( segment ) );
+    }
+
+    return GetMacroName( segment.Macro.Slot );
+  }
+
+  /// <summary>
+  ///   Tries to retrieve the macro name associated with the specified slot.
+  /// </summary>
+  /// <param name="slot">The zero-based index of the slot for which to retrieve the macro name.</param>
+  /// <param name="macroName">The name of the macro assigned to the specified slot, if found.</param>
+  /// <returns><c>true</c> if the macro name was found; otherwise, <c>false</c>.</returns>
+  public bool TryGetMacroName(
+    int slot,
+    out string? macroName )
+  {
+    return _slotToMacroName.TryGetValue( slot, out macroName );
+  }
+
+  /// <summary>
+  ///   Tries to retrieve the macro name associated with the specified macro segment.
+  /// </summary>
+  /// <param name="segment">The segment representing a macro. Must be of kind StandardMacro or Macro.</param>
+  /// <param name="macroName">The name of the macro corresponding to the specified segment, if found.</param>
+  /// <returns><c>true</c> if the macro name was found; otherwise, <c>false</c>.</returns>
+  internal bool TryGetMacroName(
+    Segment segment,
+    out string? macroName )
+  {
+    if( segment.Kind != SegmentKind.Macro )
+    {
+      throw new ArgumentException( "Must be a macro segment", nameof( segment ) );
+    }
+
+    return _slotToMacroName.TryGetValue( segment.Macro.Slot, out macroName );
   }
 
   #endregion

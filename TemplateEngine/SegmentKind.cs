@@ -21,14 +21,8 @@ internal enum SegmentKind: byte
   Constant,
 
   /// <summary>
-  ///   Indicates the segment represents a user-defined macro invocation that will be resolved
-  ///   by a custom macro resolver during template expansion.
+  ///   Indicates the segment represents a macro invocation that will be resolved
+  ///   during template expansion.
   /// </summary>
-  UserMacro,
-
-  /// <summary>
-  ///   Indicates the segment represents a standard (built-in) macro invocation that will be resolved
-  ///   by the template engine's standard macro handler during template expansion.
-  /// </summary>
-  StandardMacro
+  Macro
 }

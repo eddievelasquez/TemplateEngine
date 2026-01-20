@@ -76,6 +76,123 @@ public class MacroTableTest
     act.Should().Throw<ArgumentException>();
   }
 
+  [Fact]
+  public void GetMacroName_WithInt_ShouldReturnMacroName_WhenSlotExists()
+  {
+    var builder = new MacroTableBuilder();
+    builder.Declare( "FOO" );
+    builder.Declare( "BAR" );
+
+    var table = builder.Build();
+    table.GetMacroName( 1 ).Should().Be( "FOO" );
+    table.GetMacroName( 2 ).Should().Be( "BAR" );
+  }
+
+  [Fact]
+  public void GetMacroName_WithInt_ShouldThrow_WhenSlotDoesNotExist()
+  {
+    var builder = new MacroTableBuilder();
+    builder.Declare( "FOO" );
+
+    var table = builder.Build();
+    Action act = () => table.GetMacroName( 999 );
+    act.Should().Throw<KeyNotFoundException>();
+  }
+
+  [Fact]
+  public void GetMacroName_WithSegment_ShouldReturnMacroName_WhenUserMacroSegment()
+  {
+    var builder = new MacroTableBuilder();
+    builder.Declare( "FOO" );
+    builder.Declare( "BAR" );
+
+    var table = builder.Build();
+    var segment = Segment.CreateMacro( 1, -1, 0 );
+    table.GetMacroName( segment ).Should().Be( "FOO" );
+
+    segment = Segment.CreateMacro( 2, -1, 0 );
+    table.GetMacroName( segment ).Should().Be( "BAR" );
+  }
+
+  [Fact]
+  public void GetMacroName_WithSegment_ShouldThrow_WhenConstantSegment()
+  {
+    var table = new MacroTableBuilder().Build();
+    var segment = Segment.CreateConstant( 0, 10 );
+    Action act = () => table.GetMacroName( segment );
+    act.Should().Throw<ArgumentException>().WithMessage( "Must be a macro segment*" );
+  }
+
+  [Fact]
+  public void TryGetMacroName_WithInt_ShouldReturnTrueAndMacroName_WhenSlotExists()
+  {
+    var builder = new MacroTableBuilder();
+    builder.Declare( "FOO" );
+    builder.Declare( "BAR" );
+
+    var table = builder.Build();
+    var result = table.TryGetMacroName( 1, out var macroName );
+    result.Should().BeTrue();
+    macroName.Should().Be( "FOO" );
+
+    result = table.TryGetMacroName( 2, out macroName );
+    result.Should().BeTrue();
+    macroName.Should().Be( "BAR" );
+  }
+
+  [Fact]
+  public void TryGetMacroName_WithInt_ShouldReturnFalseAndNull_WhenSlotDoesNotExist()
+  {
+    var builder = new MacroTableBuilder();
+    builder.Declare( "FOO" );
+
+    var table = builder.Build();
+    var result = table.TryGetMacroName( 999, out var macroName );
+    result.Should().BeFalse();
+    macroName.Should().BeNull();
+  }
+
+  [Fact]
+  public void TryGetMacroName_WithSegment_ShouldReturnTrueAndMacroName_WhenUserMacroSegment()
+  {
+    var builder = new MacroTableBuilder();
+    builder.Declare( "FOO" );
+    builder.Declare( "BAR" );
+
+    var table = builder.Build();
+    var segment = Segment.CreateMacro( 1, -1, 0 );
+    var result = table.TryGetMacroName( segment, out var macroName );
+    result.Should().BeTrue();
+    macroName.Should().Be( "FOO" );
+
+    segment = Segment.CreateMacro( 2, -1, 0 );
+    result = table.TryGetMacroName( segment, out macroName );
+    result.Should().BeTrue();
+    macroName.Should().Be( "BAR" );
+  }
+
+  [Fact]
+  public void TryGetMacroName_WithSegment_ShouldReturnFalseAndNull_WhenSlotDoesNotExist()
+  {
+    var builder = new MacroTableBuilder();
+    builder.Declare( "FOO" );
+
+    var table = builder.Build();
+    var segment = Segment.CreateMacro( 999, -1, 0 );
+    var result = table.TryGetMacroName( segment, out var macroName );
+    result.Should().BeFalse();
+    macroName.Should().BeNull();
+  }
+
+  [Fact]
+  public void TryGetMacroName_WithSegment_ShouldThrow_WhenConstantSegment()
+  {
+    var table = new MacroTableBuilder().Build();
+    var segment = Segment.CreateConstant( 0, 10 );
+    Action act = () => table.TryGetMacroName( segment, out _ );
+    act.Should().Throw<ArgumentException>().WithMessage( "Must be a macro segment*" );
+  }
+
   #endregion
 
 #if NET9_0_OR_GREATER
