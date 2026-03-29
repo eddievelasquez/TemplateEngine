@@ -8,9 +8,55 @@ namespace Intercode.Toolbox.TemplateEngine.Tests;
 
 using System.Text;
 
+[Trait( "Category", "Segments" )]
 public class MacroSegmentTest
 {
   #region Tests
+
+  [Theory]
+  [InlineData( -1, 20, 8 )]
+  [InlineData( -5, 200, 20 )]
+  public void CreateMacro_ShouldCreateStandardMacro_WhenSlotIsNegative(
+    int slot,
+    int argStart,
+    int argLength )
+  {
+    var segment = Segment.CreateMacro( slot, argStart, argLength );
+
+    segment.Kind.Should().Be( SegmentKind.Macro );
+    segment.Macro.Slot.Should().Be( slot );
+    segment.Macro.IsStandardMacro.Should().BeTrue();
+    segment.Macro.IsUserMacro.Should().BeFalse();
+    segment.Macro.ArgumentStart.Should().Be( argStart );
+    segment.Macro.ArgumentLength.Should().Be( ( ushort ) argLength );
+  }
+
+  [Theory]
+  [InlineData( 1, 20, 8 )]
+  [InlineData( 5, 200, 20 )]
+  public void CreateMacro_ShouldCreateUserMacro_WhenSlotIsNonNegative(
+    int slot,
+    int argStart,
+    int argLength )
+  {
+    var segment = Segment.CreateMacro( slot, argStart, argLength );
+
+    segment.Kind.Should().Be( SegmentKind.Macro );
+    segment.Macro.Slot.Should().Be( ( ushort ) slot );
+    segment.Macro.ArgumentStart.Should().Be( argStart );
+    segment.Macro.ArgumentLength.Should().Be( ( ushort ) argLength );
+  }
+
+  [Fact]
+  public void CreateMacro_ShouldCreateUserMacro_WhenSlotIsZero()
+  {
+    var segment = Segment.CreateMacro( 0, 20, 8 );
+
+    segment.Kind.Should().Be( SegmentKind.Macro );
+    segment.Macro.Slot.Should().Be( 0 );
+    segment.Macro.ArgumentStart.Should().Be( 20 );
+    segment.Macro.ArgumentLength.Should().Be( 8 );
+  }
 
   [Fact]
   public void GetArgumentSpan_ShouldReturnCorrectSpan_WhenArgumentExists()
@@ -33,16 +79,6 @@ public class MacroSegmentTest
   }
 
   [Fact]
-  public void GetArgumentSpan_ShouldReturnSingleCharacter_WhenArgumentLengthIsOne()
-  {
-    var template = CreateTemplate( "$m:X$" );
-    var segment = Segment.CreateMacro( 1, 3, 1 ).Macro;
-    var result = segment.GetArgumentSpan( template );
-
-    result.ToString().Should().Be( "X" );
-  }
-
-  [Fact]
   public void GetArgumentSpan_ShouldReturnEmptySpan_WhenArgumentStartIsMinus1()
   {
     var template = CreateTemplate( "$macro$" );
@@ -51,6 +87,16 @@ public class MacroSegmentTest
     var result = segment.GetArgumentSpan( template );
 
     result.IsEmpty.Should().BeTrue();
+  }
+
+  [Fact]
+  public void GetArgumentSpan_ShouldReturnSingleCharacter_WhenArgumentLengthIsOne()
+  {
+    var template = CreateTemplate( "$m:X$" );
+    var segment = Segment.CreateMacro( 1, 3, 1 ).Macro;
+    var result = segment.GetArgumentSpan( template );
+
+    result.ToString().Should().Be( "X" );
   }
 
   [Fact]
@@ -94,7 +140,7 @@ public class MacroSegmentTest
   }
 
   [Fact]
-  public void GetDebuggerString_ShouldReturnFormattedString_WithArgument()
+  public void GetDebuggerString_ShouldReturnFormattedString()
   {
     var segment = Segment.CreateMacro( 5, 20, 25 ).Macro;
     var builder = new StringBuilder();
@@ -104,6 +150,48 @@ public class MacroSegmentTest
     builder.ToString()
            .Should()
            .Be( "Macro { Slot: 5, ArgumentStart: 20, ArgumentLength: 25 }" );
+  }
+
+  [Theory]
+  [InlineData( -1, 20, 8 )]
+  [InlineData( 1, 20, 8 )]
+  public void GetDebuggerString_ShouldReturnMacroString(
+    int slot,
+    int argStart,
+    int argLength )
+  {
+    var segment = Segment.CreateMacro( slot, argStart, argLength );
+
+    var result = segment.GetDebuggerString();
+
+    result.Should()
+          .Be(
+            $"Macro {{ Slot: {slot}, ArgumentStart: {argStart}, ArgumentLength: {argLength} }}"
+          );
+  }
+
+  [Fact]
+  public void MacroProperty_ShouldBeAccessible_WhenKindIsStandardMacro()
+  {
+    var segment = Segment.CreateMacro( 7, 80, 18 );
+
+    var macro = segment.Macro;
+
+    macro.Slot.Should().Be( 7 );
+    macro.ArgumentStart.Should().Be( 80 );
+    macro.ArgumentLength.Should().Be( 18 );
+  }
+
+  [Fact]
+  public void MacroProperty_ShouldBeAccessible_WhenKindIsUserMacro()
+  {
+    var segment = Segment.CreateMacro( 3, 70, 15 );
+
+    var macro = segment.Macro;
+
+    macro.Slot.Should().Be( 3 );
+    macro.ArgumentStart.Should().Be( 70 );
+    macro.ArgumentLength.Should().Be( 15 );
   }
 
   #endregion

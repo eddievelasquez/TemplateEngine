@@ -4,8 +4,7 @@
 
 namespace Intercode.Toolbox.TemplateEngine.Tests;
 
-using FluentAssertions;
-
+[Trait( "Category", "Compiler" )]
 public class TemplateCompilerOptionsTest
 {
   #region Tests

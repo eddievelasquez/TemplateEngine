@@ -6,6 +6,7 @@ namespace Intercode.Toolbox.TemplateEngine.Tests;
 
 using Intercode.Toolbox.TemplateEngine.Tests.FluentAssertions;
 
+[Trait( "Category", "Compiler" )]
 public class TemplateCompilerTests
 {
   #region Tests

@@ -4,6 +4,7 @@
 
 namespace Intercode.Toolbox.TemplateEngine.Tests;
 
+[Trait( "Category", "Processing" )]
 public class MacroTableTest
 {
   #region Tests

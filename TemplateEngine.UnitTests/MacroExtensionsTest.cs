@@ -4,6 +4,7 @@
 
 namespace Intercode.Toolbox.TemplateEngine.Tests;
 
+[Trait( "Category", "Compiler" )]
 public class MacroExtensionsTest
 {
   #region Tests

@@ -5,8 +5,8 @@
 namespace Intercode.Toolbox.TemplateEngine.Tests;
 
 using System.Text;
-using FluentAssertions;
 
+[Trait( "Category", "Compiler" )]
 public class StringBuilderPoolTests
 {
   #region Tests

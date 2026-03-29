@@ -6,6 +6,7 @@ namespace Intercode.Toolbox.TemplateEngine.Tests;
 
 using System.Globalization;
 
+[Trait( "Category", "Processing" )]
 public class StandardMacrosTest
 {
   #region Tests

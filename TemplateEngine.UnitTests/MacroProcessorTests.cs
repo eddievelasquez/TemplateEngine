@@ -9,6 +9,7 @@ namespace Intercode.Toolbox.TemplateEngine.Tests;
 using System.Text;
 using Microsoft.Extensions.Time.Testing;
 
+[Trait( "Category", "Processing" )]
 public class MacroProcessorTests
 {
   #region Fields

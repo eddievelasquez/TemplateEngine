@@ -6,6 +6,7 @@ namespace Intercode.Toolbox.TemplateEngine.Tests;
 
 using System.Text;
 
+[Trait( "Category", "Segments" )]
 public class ConstantSegmentTest
 {
   #region Tests
@@ -34,6 +35,17 @@ public class ConstantSegmentTest
 
     constantSegment.TextStart.Should().Be( 10 );
     constantSegment.TextLength.Should().Be( 20 );
+  }
+
+  [Fact]
+  public void CreateConstant_ShouldReturnConstantKindAndExpectedText_WhenTemplateContainsText()
+  {
+    var template = CreateTemplate( "Hello World, this is a test!" );
+    var segment = Segment.CreateConstant( 0, 11 );
+
+    segment.Kind.Should().Be( SegmentKind.Constant );
+    segment.Constant.GetText( template ).Should().Be( "Hello World" );
+    segment.Constant.GetTextSpan( template ).ToString().Should().Be( "Hello World" );
   }
 
   [Fact]

@@ -13,10 +13,10 @@ using System.Text;
 ///   Represents a parsed segment of a template, which can be either a constant text region or a macro invocation.
 /// </summary>
 /// <remarks>
-///   This struct uses explicit layout to create a discriminated union, storing either a <see cref="ConstantSegment" />
-///   or a <see cref="MacroSegment" /> based on the <see cref="Kind" /> discriminator. The struct occupies 20 bytes
-///   with all fields aligned to their natural boundaries (4-byte alignment for the union offset) for optimal CPU
-///   memory access patterns.
+///   This struct uses explicit layout to create a discriminated union, storing either a <see cref="ConstantSegment" /> or
+///   a <see cref="MacroSegment" /> based on the <see cref="Kind" /> discriminator. The struct occupies 20 bytes with all
+///   fields aligned to their natural boundaries (4-byte alignment for the union offset) for optimal CPU memory access
+///   patterns.
 /// </remarks>
 [StructLayout( LayoutKind.Explicit, Size = 20 )]
 [DebuggerDisplay( "{GetDebuggerString()}" )]
@@ -115,25 +115,25 @@ internal readonly struct Segment
   ///   Creates a macro segment with automatic determination of the macro kind based on the slot value.
   /// </summary>
   /// <param name="slot">
-  ///   The slot index where the macro resolver is stored. Negative values indicate a standard macro;
-  ///   non-negative values indicate a user-defined macro. Valid range is [-32768, 65535].
+  ///   The slot index where the macro resolver is stored. Negative values indicate a standard macro; non-negative values
+  ///   indicate a user-defined macro. Valid range is [-32768, 65535].
   /// </param>
   /// <param name="argumentStart">
-  ///   The zero-based starting index of the macro argument in the template source, or -1 if no
-  ///   argument is present.
+  ///   The zero-based starting index of the macro argument in the template source, or -1 if no argument is present.
   /// </param>
-  /// <param name="argumentLength">The length of the macro argument in characters. Must be in the range [0, 65535].</param>
+  /// <param name="argumentLength">
+  ///   The length of the macro argument in characters. Must be in the range [0, 65535].
+  /// </param>
   /// <returns>
-  ///   A new <see cref="Segment" /> instance configured as either a standard macro segment (if <paramref name="slot" /> is
-  ///   negative)
-  ///   or a user macro segment (if <paramref name="slot" /> is non-negative).
+  ///   A new <see cref="Segment" /> instance configured as either a standard macro segment (if <paramref name="slot" />
+  ///   is negative) or a user macro segment (if <paramref name="slot" /> is non-negative).
   /// </returns>
   /// <exception cref="ArgumentOutOfRangeException">
   ///   Thrown when any parameter is outside its valid range.
   /// </exception>
   /// <remarks>
-  ///   This method provides a convenient way to create macro segments without explicitly specifying the macro kind.
-  ///   The sign of the <paramref name="slot" /> parameter determines whether a standard or user-defined macro is created.
+  ///   This method provides a convenient way to create macro segments without explicitly specifying the macro kind. The
+  ///   sign of the <paramref name="slot" /> parameter determines whether a standard or user-defined macro is created.
   /// </remarks>
   public static Segment CreateMacro(
     int slot,
@@ -159,8 +159,8 @@ internal readonly struct Segment
   /// </summary>
   /// <returns>A formatted string describing the segment's type and contents.</returns>
   /// <remarks>
-  ///   This method is used by the debugger display attribute and utilizes a pooled <see cref="StringBuilder" />
-  ///   to minimize allocations during debugging sessions.
+  ///   This method is used by the debugger display attribute and utilizes a pooled <see cref="StringBuilder" /> to
+  ///   minimize allocations during debugging sessions.
   /// </remarks>
   internal string GetDebuggerString()
   {
